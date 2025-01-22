@@ -1,7 +1,7 @@
 <table>
   <tr>
     <td style="width: 40%; text-align: center;">
-      <img src="PAN_logo.svg" alt="PAN" width="200"/>
+      <img src="PAN_logo.svg" alt="PAN" width="400"/>
     </td>
     <td style="width: 60%;">
       <h1>TopoChronia: Digital Elevation Models of the Earth Past based on the PANALESIS Plate Tectonic Model</h1>
