@@ -1,0 +1,5 @@
+<RCC>
+    <qresource prefix="/plugins/topo_chronia" >
+        <file>icon.png</file>
+    </qresource>
+</RCC>

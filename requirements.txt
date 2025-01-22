@@ -1,0 +1,4 @@
+geopy==2.4.1
+pandas==1.4.4
+processing==0.52
+PyQt5==5.15.11

@@ -1,0 +1,32 @@
+GNU GENERAL PUBLIC LICENSE
+Version 2, June 1991
+
+Copyright (C) 2025 Florian Franziskakis
+
+This program is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation; either version 2 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, write to the Free Software
+Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+
+---
+
+This plugin is distributed as part of the QGIS ecosystem and must adhere to the licensing terms of the QGIS project. By distributing or modifying this plugin, you agree to comply with the GPLv2 or any later version of the GPL. The source code must be made available to any recipient of the binary plugin.
+
+If you use this plugin in your research or projects, please cite the following:
+
+[Paper Citation Here]
+
+If you have any questions or require additional permissions, please contact florian.franziskakis@unige.ch.
+
+---
+
+For a full copy of the GNU General Public License, see https://www.gnu.org/licenses/old-licenses/gpl-2.0.en.html.
