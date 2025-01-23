@@ -26,7 +26,8 @@ import os
 import os.path
 import importlib.util
 import json
-
+import sys
+import subprocess
 
 from qgis.PyQt.QtCore import QSettings, QTranslator, QCoreApplication
 from qgis.PyQt.QtGui import QIcon
@@ -38,6 +39,16 @@ def is_package_installed(package_name):
     spec = importlib.util.find_spec(package_name)
     return spec is not None
 
+def install_package(package_line):
+    try:
+        # Call pip using the QGIS Python executable
+        command = [sys.executable, "-m", "pip", "install", package_line]
+        QgsMessageLog.logMessage(f"Running command: {' '.join(command)}", "TopoChronia", Qgis.Info)
+        subprocess.run(command, check=True)
+        QgsMessageLog.logMessage(f"Successfully installed {package_line}", "TopoChronia", Qgis.Info)
+    except subprocess.CalledProcessError as e:
+        QgsMessageLog.logMessage(f"Failed to install {package_line}: {e}", "TopoChronia", Qgis.Critical)
+
 def check_and_install_requirements(requirements_file):
     with open(requirements_file, "r") as f:
         for line in f:
@@ -47,7 +58,7 @@ def check_and_install_requirements(requirements_file):
             package_name = package_line.split("==")[0]
             if not is_package_installed(package_name):
                 QgsMessageLog.logMessage(f"Installing {package_name}", "TopoChronia", Qgis.Info)
-                os.system(f"pip install {package_line}")
+                install_package(package_line)
             else:
                 QgsMessageLog.logMessage(f"{package_name} already installed", "TopoChronia", Qgis.Info)
 
