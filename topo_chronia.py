@@ -39,15 +39,16 @@ def is_package_installed(package_name):
     spec = importlib.util.find_spec(package_name)
     return spec is not None
 
-def install_package(package_line):
+def load_package_from_wheel(package_name, wheel_filename):
     try:
-        # Call pip using the QGIS Python executable
-        command = [sys.executable, "-m", "pip", "install", package_line]
-        QgsMessageLog.logMessage(f"Running command: {' '.join(command)}", "TopoChronia", Qgis.Info)
-        subprocess.run(command, check=True)
-        QgsMessageLog.logMessage(f"Successfully installed {package_line}", "TopoChronia", Qgis.Info)
-    except subprocess.CalledProcessError as e:
-        QgsMessageLog.logMessage(f"Failed to install {package_line}: {e}", "TopoChronia", Qgis.Critical)
+        # Attempt to dynamically load the library from a bundled wheel file
+        this_dir = os.path.dirname(os.path.realpath(__file__))
+        wheel_path = os.path.join(this_dir, wheel_filename)
+        sys.path.append(wheel_path)
+        __import__(package_name)
+        QgsMessageLog.logMessage(f"Loaded {package_name} from {wheel_filename}", "TopoChronia", Qgis.Info)
+    except Exception as e:
+        QgsMessageLog.logMessage(f"Failed to load {package_name} from {wheel_filename}: {e}", "TopoChronia", Qgis.Critical)
 
 def check_and_install_requirements(requirements_file):
     with open(requirements_file, "r") as f:
@@ -57,8 +58,9 @@ def check_and_install_requirements(requirements_file):
                 continue
             package_name = package_line.split("==")[0]
             if not is_package_installed(package_name):
-                QgsMessageLog.logMessage(f"Installing {package_name}", "TopoChronia", Qgis.Info)
-                install_package(package_line)
+                QgsMessageLog.logMessage(f"{package_name} not found. Attempting to load from local wheel.", "TopoChronia", Qgis.Warning)
+                wheel_filename = f"{package_name.replace('-', '_')}-x.y.z-py2.py3-none-any.whl"  # Adjust naming pattern as needed
+                load_package_from_wheel(package_name, wheel_filename)
             else:
                 QgsMessageLog.logMessage(f"{package_name} already installed", "TopoChronia", Qgis.Info)
 
