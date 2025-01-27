@@ -82,7 +82,7 @@
   <connection>
    <sender>button_box</sender>
    <signal>accepted()</signal>
-   <receiver>TopoChroniaMakerMatchFieldsDialog</receiver>
+   <receiver>TopoChroniaMatchFieldsDialog</receiver>
    <slot>accept()</slot>
    <hints>
     <hint type="sourcelabel">
