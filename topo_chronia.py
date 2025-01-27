@@ -66,7 +66,7 @@ def ensure_package_installed(package_name):
 
 required_packages = ["pandas", "geopy"]
 for package in required_packages:
-    ensure_package_installed(required_packages)
+    ensure_package_installed(package)
 
 from .dialogs.check_configuration_dialog import CheckConfigurationDialog
 from .dialogs.create_node_grid_dialog import CreateNodeGridDialog
