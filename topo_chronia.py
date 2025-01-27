@@ -64,7 +64,9 @@ def ensure_package_installed(package_name):
         QgsMessageLog.logMessage(f"{package_name} package not found. Attempting installation...", "TopoChronia", Qgis.Info)
         install_package(package_name)
 
-ensure_package_installed("geopy")
+required_packages = ["pandas", "geopy"]
+for package in required_packages:
+    ensure_package_installed(required_packages)
 
 from .dialogs.check_configuration_dialog import CheckConfigurationDialog
 from .dialogs.create_node_grid_dialog import CreateNodeGridDialog
