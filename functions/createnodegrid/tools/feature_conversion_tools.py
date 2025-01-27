@@ -1,6 +1,8 @@
 import os
+import sys
 import pandas as pd
 import math
+import subprocess
 import processing
 import json
 from qgis.core import (Qgis, edit, QgsPoint, QgsMessageLog, QgsFeatureRequest, QgsMultiPoint, QgsGeometry, QgsPointXY,
@@ -8,8 +10,17 @@ from qgis.core import (Qgis, edit, QgsPoint, QgsMessageLog, QgsFeatureRequest, Q
                        QgsField, QgsProcessingFeatureSourceDefinition)
 
 from qgis.PyQt.QtCore import QVariant
-from geopy.distance import geodesic, great_circle
-from geopy.point import Point
+
+try:
+    import geopy
+    has_geopy = True
+    from geopy.distance import geodesic, great_circle
+    from geopy.point import Point
+
+    QgsMessageLog.logMessage("geopy already installed and imported successfully",
+                             "TopoChronia", Qgis.Info)
+except Exception:
+    has_geopy = False
 
 from ...base_tools import BaseTools
 base_tools = BaseTools()

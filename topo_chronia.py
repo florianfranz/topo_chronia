@@ -24,10 +24,11 @@
 """
 import os
 import os.path
-import importlib.util
 import json
-import sys
+import inspect
+import numpy
 import subprocess
+from pathlib import Path
 
 from qgis.PyQt.QtCore import QSettings, QTranslator, QCoreApplication
 from qgis.PyQt.QtGui import QIcon
@@ -35,38 +36,35 @@ from qgis.PyQt.QtWidgets import QAction, QFileDialog, QDialog
 from qgis.core import QgsProject, Qgis, QgsMessageLog
 from qgis.core import QgsLayerTreeLayer, QgsApplication
 
-def is_package_installed(package_name):
-    spec = importlib.util.find_spec(package_name)
-    return spec is not None
+def install_package(package_name):
+    module_path = inspect.getfile(numpy)
+    QgsMessageLog.logMessage(f"Module path is :{module_path}", "TopoChronia", Qgis.Info)
+    parts = Path(module_path).parts
+    for i, part in enumerate(parts):
+        if "Python" in part:
+            python_base_path = Path(*parts[:i + 1])
+            break
+    scripts_path = os.path.join(python_base_path, "Scripts")
+    pip_executable = os.path.join(scripts_path, "pip3.exe")
+    if os.path.exists(pip_executable):
+        try:
+            subprocess.check_call([pip_executable, "install", package_name])
+            QgsMessageLog.logMessage(f"{package_name} package installed successfully.", "TopoChronia", Qgis.Info)
+        except subprocess.CalledProcessError as e:
+            QgsMessageLog.logMessage(f"Failed to install {package_name}: {str(e)}", "TopoChronia", Qgis.Info)
+    else:
+        QgsMessageLog.logMessage("pip executable not found. Package installation failed.", "TopoChronia", Qgis.Info)
 
-def load_package_from_wheel(package_name, wheel_filename):
+
+def ensure_package_installed(package_name):
     try:
-        # Attempt to dynamically load the library from a bundled wheel file
-        this_dir = os.path.dirname(os.path.realpath(__file__))
-        wheel_path = os.path.join(this_dir, wheel_filename)
-        sys.path.append(wheel_path)
         __import__(package_name)
-        QgsMessageLog.logMessage(f"Loaded {package_name} from {wheel_filename}", "TopoChronia", Qgis.Info)
-    except Exception as e:
-        QgsMessageLog.logMessage(f"Failed to load {package_name} from {wheel_filename}: {e}", "TopoChronia", Qgis.Critical)
+        QgsMessageLog.logMessage(f"{package_name} package is already installed and ready to use.", "TopoChronia", Qgis.Info)
+    except ImportError:
+        QgsMessageLog.logMessage(f"{package_name} package not found. Attempting installation...", "TopoChronia", Qgis.Info)
+        install_package(package_name)
 
-def check_and_install_requirements(requirements_file):
-    with open(requirements_file, "r") as f:
-        for line in f:
-            package_line = line.strip()
-            if not package_line or package_line.startswith("#"):
-                continue
-            package_name = package_line.split("==")[0]
-            if not is_package_installed(package_name):
-                QgsMessageLog.logMessage(f"{package_name} not found. Attempting to load from local wheel.", "TopoChronia", Qgis.Warning)
-                wheel_filename = f"{package_name.replace('-', '_')}-x.y.z-py2.py3-none-any.whl"  # Adjust naming pattern as needed
-                load_package_from_wheel(package_name, wheel_filename)
-            else:
-                QgsMessageLog.logMessage(f"{package_name} already installed", "TopoChronia", Qgis.Info)
-
-base_dir = os.path.dirname(os.path.abspath(__file__))
-requirements_file = os.path.join(base_dir, "requirements.txt")
-check_and_install_requirements(requirements_file)
+ensure_package_installed("geopy")
 
 from .dialogs.check_configuration_dialog import CheckConfigurationDialog
 from .dialogs.create_node_grid_dialog import CreateNodeGridDialog
@@ -186,7 +184,7 @@ class TopoChronia:
             parent=self.iface.mainWindow(),
             data={'phase': 0},
             enabled_flag= True,
-            status_tip= "Click here to check the configuration of input data for TopoChronia.")
+            status_tip= "Click here to check the configuration of input data for TopoChronia")
 
         self.add_action(
             icon_path_phase1,
@@ -195,7 +193,7 @@ class TopoChronia:
             parent=self.iface.mainWindow(),
             data={'phase': 1},
             enabled_flag = True,
-            status_tip= "Function not available. Please complete Phase 0.")
+            status_tip= "Click here to start the features conversion into nodes with elevation")
 
         self.add_action(
             icon_path_phase2,
@@ -204,7 +202,7 @@ class TopoChronia:
             parent=self.iface.mainWindow(),
             data={'phase': 2},
             enabled_flag= True,
-            status_tip= "Function not available. Please complete Phase 0 and Phase I.")
+            status_tip= "Click here to interpolate from nodes to raster and correct water load")
 
     def unload(self):
         """
