@@ -17,8 +17,6 @@ try:
     from geopy.distance import geodesic, great_circle
     from geopy.point import Point
 
-    QgsMessageLog.logMessage("geopy already installed and imported successfully",
-                             "TopoChronia", Qgis.Info)
 except Exception:
     has_geopy = False
 

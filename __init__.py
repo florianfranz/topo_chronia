@@ -22,6 +22,22 @@
  ***************************************************************************/
  This script initializes the plugin, making it known to QGIS.
 """
+
+import os
+import sys
+
+# Define the path to the ext_libraries folder (relative to __init__.py)
+extlibs = os.path.abspath(os.path.join(os.path.dirname(__file__), "ext_libraries"))
+
+# Check if the folder exists and isn't already in sys.path
+if os.path.exists(extlibs) and extlibs not in sys.path:
+    sys.path.insert(0, extlibs)
+
+# You can now import libraries from ext_libraries
+try:
+    import geopy
+except ImportError as e:
+    raise ImportError(f"Failed to import geopy from {extlibs}. Error: {e}")
 # noinspection PyPep8Naming
 def classFactory(iface):  # pylint: disable=invalid-name
     """Load TopoChronia class from file TopoChronia.

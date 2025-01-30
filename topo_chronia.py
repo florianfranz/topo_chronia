@@ -25,48 +25,12 @@
 import os
 import os.path
 import json
-import inspect
-import numpy
-import subprocess
-from pathlib import Path
 
 from qgis.PyQt.QtCore import QSettings, QTranslator, QCoreApplication
 from qgis.PyQt.QtGui import QIcon
 from qgis.PyQt.QtWidgets import QAction, QFileDialog, QDialog
 from qgis.core import QgsProject, Qgis, QgsMessageLog
 from qgis.core import QgsLayerTreeLayer, QgsApplication
-
-def install_package(package_name):
-    module_path = inspect.getfile(numpy)
-    QgsMessageLog.logMessage(f"Module path is :{module_path}", "TopoChronia", Qgis.Info)
-    parts = Path(module_path).parts
-    for i, part in enumerate(parts):
-        if "Python" in part:
-            python_base_path = Path(*parts[:i + 1])
-            break
-    scripts_path = os.path.join(python_base_path, "Scripts")
-    pip_executable = os.path.join(scripts_path, "pip3.exe")
-    if os.path.exists(pip_executable):
-        try:
-            subprocess.check_call([pip_executable, "install", package_name])
-            QgsMessageLog.logMessage(f"{package_name} package installed successfully.", "TopoChronia", Qgis.Info)
-        except subprocess.CalledProcessError as e:
-            QgsMessageLog.logMessage(f"Failed to install {package_name}: {str(e)}", "TopoChronia", Qgis.Info)
-    else:
-        QgsMessageLog.logMessage("pip executable not found. Package installation failed.", "TopoChronia", Qgis.Info)
-
-
-def ensure_package_installed(package_name):
-    try:
-        __import__(package_name)
-        QgsMessageLog.logMessage(f"{package_name} package is already installed and ready to use.", "TopoChronia", Qgis.Info)
-    except ImportError:
-        QgsMessageLog.logMessage(f"{package_name} package not found. Attempting installation...", "TopoChronia", Qgis.Info)
-        install_package(package_name)
-
-required_packages = ["pandas", "geopy"]
-for package in required_packages:
-    ensure_package_installed(package)
 
 from .dialogs.check_configuration_dialog import CheckConfigurationDialog
 from .dialogs.create_node_grid_dialog import CreateNodeGridDialog
