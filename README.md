@@ -29,19 +29,17 @@ to the present-day volume, in order to assess the difference of sea-level.
 ![workflow](workflow.png)
 ## Installation
 
-TopoChronia runs as a QGIS plugin. It can be used on QGIS version 3.36 or higher.
+TopoChronia runs as a QGIS plugin. It can be used on QGIS version 3.36 or higher, and was developed with Python 3.12.3.
 
-There are two ways to install the plugin:
+To install the plugin:
 
-* [WIP] : Directly from QGIS:
-  - Open QGIS → Plugins → Manage and Install Plugins → All → Search for 'TopoChronia' → Install
 * Manual installation:
   - Go to the [releases folder](./releases) and download the desired version as a .zip file. 
   - Open QGIS → Plugins → Manage and Install Plugins → Install from .zip
   - Select the downloaded .zip folder and click on "Install".
 
-Apart from native QGIS python libraries, the plugin also requires the following Python packages: `geopy`, `pandas`,
-`processing`,`PyQt5`. For more information, about versions are available in the  [requirements.txt](./requirements.txt).  These libraries will be automatically installed alongside the plugin itself.
+Apart from native QGIS python libraries, the plugin also requires the `pandas` Python package, that is oftentimes not
+included with QGIS. For more information, including about packages and versions, check the [requirements.txt](./requirements.txt).  These libraries will be automatically installed alongside the plugin itself.
 
 Once installed, the plugin should be listed under the "Plugin", and there should be three icons appearing on the QGIS 
 toolbar as in the picture below:
@@ -70,7 +68,7 @@ TopoChronia requires the following input files from PANALESIS:
 - Plate Polygons (PP): Polygons describing the tectonic plates
 - Continent-Ocean Boundary (COB): Polygons describing the boundary between continental and oceanic crust
 - Geodesic Grid: Grid of points equally distant from one another.
-- Accretion Rates: Table with plate veolicities and accretion rates for each of the PANALESIS ages.
+- Accretion Rates: Table with plate velocities and accretion rates for each of the PANALESIS ages.
 
 If all input files pass the check, this initial phase yields two outputs:
 - A list of common reconstruction ages to all input files to base further processing.
@@ -109,9 +107,17 @@ This last phase is also divided into the following steps:
 
 ## Documentation
 
+A complete documentation including a step-by-step tutorial is available at https://topo-chronia.readthedocs.io/en/latest/#
 
-## Contributing to the development
+## Contributing
 
+Contributions are welcome! To contribute:
+1. Fork the repository 
+2. Make changes 
+3. Submit a pull request
+
+Or raise an issue [here](https://github.com/florianfranz/topo_chronia/issues). For any issues, please mention the QGIS,
+Python versions you are using and your OS.
 
 ## Authors
 
@@ -122,10 +128,3 @@ This last phase is also divided into the following steps:
 ## License
 This plugin is licensed under the GNU General Public License, version 2 or later (GPLv2+). 
 You can view the full license text in the [LICENSE.txt](./LICENSE.txt).
-
-## How to cite
-
-JOSS reference
-
-
-
