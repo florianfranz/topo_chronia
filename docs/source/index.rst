@@ -2,11 +2,9 @@
 TopoChronia
 ========================
 
-.. toctree::
-   :maxdepth: 2
-   :caption: Contents:
-
-   self
+.. contents:: Table of Contents
+   :depth: 2
+   :local:
 
 Introduction
 ============

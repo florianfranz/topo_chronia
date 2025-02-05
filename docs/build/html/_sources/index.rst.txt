@@ -2,6 +2,10 @@
 TopoChronia
 ========================
 
+.. contents:: Table of Contents
+   :depth: 2
+   :local:
+
 Introduction
 ============
 
@@ -200,18 +204,7 @@ Interpolate Raster
 ------------------
 
 
-.. code-block:: python
 
-    import my_project
-    my_project.run()
-
-API Reference
-=============
-
-.. automodule:: my_project
-    :members:
-    :undoc-members:
-    :show-inheritance:
 
 Contributing
 ============
