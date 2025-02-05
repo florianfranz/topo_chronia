@@ -9,7 +9,7 @@ TopoChronia
 Introduction
 ============
 
-Welcome to the documentation for **TopoChronia**. This guide will help you get started and provides a step-by-step guide
+Welcome to the documentation for `TopoChronia <https://github.com/florianfranz/topo_chronia>`_. This guide will help you get started and provides a step-by-step guide
 to process raw input PANALESIS data into fully quantified palaeotopographic maps for the entire Phanerozoic.
 
 Installation
@@ -40,8 +40,7 @@ successful.
 `external libraries folder <https://github.com/florianfranz/topo_chronia/blob/master/ext_libraries>`_.
 Other libraries might cause trouble depending on your Python version and dependencies.
 These libraries are listed in the `requirements <https://github.com/florianfranz/topo_chronia/blob/master/requirements.txt>`_.
-and can be installed using the OSGeo4W Shell (Windows) or in the standard Python
-installation.
+and can be installed using the OSGeo4W Shell (Windows) or in the standard Python installation for macOS and Linux.
 
 If successful, your toolbar should have three new icons, representing the three TopoChronia phases:
 
@@ -113,7 +112,7 @@ Once all checks are passed, we now have the option to move to Phase I: Create No
 repeat all checks every time, the results of this phase are stored in a “input_files.txt” in the default folder of QGIS,
 typically:
 
-* For Windows: C:\Users\YourUsername\Documents
+* For Windows: C://Users/YourUsername/Documents
 * For macOS: /Users/YourUsername/Documents
 * For Linux: /home/yourusername/Documents
 
@@ -123,12 +122,12 @@ layer):
 .. code-block:: json
 
    {
-       "Plate Model": "",
-       "Plate Polygons": "",
-       "Continent Polygons": "",
-       "Geodesic Grid": "",
-       "Accretion Rates": "",
-       "Output Folder": ""
+       "Plate Model": "PATH/TO/YOUR/PM/LAYER",
+       "Plate Polygons": "PATH/TO/YOUR/PP/LAYER",
+       "Continent Polygons": "PATH/TO/YOUR/COB/LAYER",
+       "Geodesic Grid": "PATH/TO/YOUR/GEODESIC/GRID/LAYER",
+       "Accretion Rates": "PATH/TO/YOUR/ACCRETION/RATES/TABLE",
+       "Output Folder": "PATH/TO/YOUR/OUTPUT/FOLDER"
    }
 
 We are now all set to start the node grid creation. Click on "Go to Next Phase".
@@ -155,15 +154,15 @@ displayed with its stratigraphic stage name, based on the `International Chronog
    :align: center
 
 Click on the desired age, and then click on "Prepare Data". This will create two layers in your output folders, which
-are continent and plate polygons for the selected age only, that will be used later on during the nodes creation (for
+are the continent and plate polygons for the selected age only, that will be used later on during the nodes creation (for
 instance to check for intersections). Once completed (it should take a minute or so), the progress bar should show 100%.
 
 The next phase is the conversion from lines (extracted from the PM) into nodes with elevation. It may take up to 1 hours
 to process everything. In order, clicking on the "Convert Features" button will perform the following operations:
 
 * Select lines (extract all lines from the PM for all features, harmonize vertices density and, if needed, create polygons for specific settings, such as hot-spots and cratons)
-* Ridges to nodes (RID)
-* Isochron to nodes (ISO)
+* Ridges (RID) to nodes
+* Isochron (ISO) to nodes
 * Preliminary raster interpolation (only using ridge and isochron nodes)
 
 Then, once the preliminary raster is interpolated, the remaining features are processed in parallel, using threads:
@@ -200,11 +199,56 @@ After the cleaning process is done, we have a layer containing all nodes that re
    :width: 700px
    :align: center
 
+**NB:** The demo data is provided following a "Europe-fixed" frame, which explains why it differs from other sources. We
+strongly advise not using the demo data for any other purposes outside of testing this plugin.
+
 Interpolate Raster
 ------------------
+This last phase takes the cleaned input nodes and performs an interpolation using the QGIS Triangulated Irregular
+Network (TIN) method, using each node synthetic elevation value.
 
+Click on the last icon "Interpolate Raster", a new dialog will open:
 
+.. image:: _static/interpolate_raster.png
+   :alt: Description of the image
+   :width: 400px
+   :align: center
 
+As per the last phase, a few steps are required here. First, click on "Create Age List from Nodes" will search the
+output folder for all nodes layer and return the available ages. L
+
+ike we did before, select the 444 Ma age and click on "Interpolate Raster". This step will perform a few tasks before
+doing the interpolation itself, including remove any duplicate geometries and reproject the nodes layer into ESRI:54034
+projection - World Cylindrical Equal Area (WCEA).
+
+The reprojection is done on the nodes layer rather than on the raster because it reduces uncertainties when calculating
+the volume of oceans later, which requires metric units and pixels with equal area.
+
+Finally, once the raster is interpolated, no-data pixels are filled. As other methods such as Inverse Distance Weighted
+(IDW) or Nearest neighbour (NN) produce a significant amount of no-data pixels, the TIN method only shows no-data pixels
+on the corners of the map.
+
+.. image:: _static/int_raster_map_1.png
+   :alt: Description of the image
+   :width: 700px
+   :align: center
+
+We are now able to calculate the oceanic volume (simplified as being the volume below elevation = 0m) and compare it
+with the current oceanic volume calculated using ETOPO 2022 data, which is used as a reference. This will inform us
+about the required sea-level increase (or decrease) needed to reach the reference volume.
+
+This change in sea-level must then be accounted for, as the water load (added or removed) will impact the elevation. For
+this, click on "Correct Water Load". Once the water load is accounted for, the nodes layer will be updated with a new
+elevation value "Z_WLC". In our case, the corrected sea-level equals to 78m above present-day, and will be added to all
+nodes.
+
+Finally, by clicking on "Interpolate Final Raster", a final raster will be created using the same method as before (QGIS
+TIN), based on the water load corrected elevation, with filling of no-data pixels.
+
+.. image:: _static/int_raster_map_2.png
+   :alt: Description of the image
+   :width: 700px
+   :align: center
 
 Contributing
 ============
