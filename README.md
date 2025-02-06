@@ -39,7 +39,8 @@ To install the plugin:
   - Select the downloaded .zip folder and click on "Install".
 
 Apart from native QGIS python libraries, the plugin also requires the `pandas` Python package, that is oftentimes not
-included with QGIS. For more information, including about packages and versions, check the [requirements.txt](./requirements.txt).  These libraries will be automatically installed alongside the plugin itself.
+included with QGIS. For more information, including about packages and versions, check the [requirements.txt](./requirements.txt).  
+
 
 Once installed, the plugin should be listed under the "Plugin", and there should be three icons appearing on the QGIS 
 toolbar as in the picture below:
@@ -109,6 +110,15 @@ This last phase is also divided into the following steps:
 
 A complete documentation including a step-by-step tutorial is available at https://topo-chronia.readthedocs.io/en/latest/#
 
+For more information about the PANALESIS model, please check out the following papers:
+
+* Vérard, C., Hochard, C., Baumgartner, P. O., Stampfli, G. M., & Liu, M. (2015). 3D palaeogeographic reconstructions of the Phanerozoic versus sea-level and Sr-ratio variations. Journal of Palaeogeography, 4(1), Article 1. https://doi.org/10.3724/SP.J.1261.2015.00068
+* Vérard, C. (2019). Panalesis: Towards global synthetic palaeogeographies using integration and coupling of manifold models. Geological Magazine, 156(2), Article 2. https://doi.org/10.1017/S0016756817001042
+
+Also, see more recent presentations about the PANALESIS transition to open-source and FAIR compliance:
+* Franziskakis, F. (2024, March 8). Reconstructing the Earth in Deep-Time: A New and Open Framework for the PANALESIS Model. European Geosciences Union (EGU) General Assembly 2024, Vienna, Austria. Zenodo. https://doi.org/10.5281/zenodo.13906863
+* Franziskakis, F. (2024, December 17). Quantified Palaeotopographic and Palaeogeographic Global Maps for the Phanerozoic using the PANALESIS Plate Tectonic Model. 22nd Swiss Geoscience Meeting, Basel, Switzerland. Zenodo. https://doi.org/10.5281/zenodo.14505269
+
 ## Contributing
 
 Contributions are welcome! To contribute:
@@ -116,8 +126,8 @@ Contributions are welcome! To contribute:
 2. Make changes 
 3. Submit a pull request
 
-Or raise an issue [here](https://github.com/florianfranz/topo_chronia/issues). For any issues, please mention the QGIS,
-Python versions you are using and your OS.
+Or raise an issue [here](https://github.com/florianfranz/topo_chronia/issues). For every issue, please mention the QGIS and
+Python versions you are using as well as your OS.
 
 ## Authors
 
@@ -126,5 +136,12 @@ Python versions you are using and your OS.
 * **Grégory Giuliani**
 
 ## License
+
 This plugin is licensed under the GNU General Public License, version 2 or later (GPLv2+). 
 You can view the full license text in the [LICENSE.txt](./LICENSE.txt).
+
+## Funding
+
+We acknowledge financial support from the Swiss National Science Foundation (SNSF) under [Sinergia grant #213539](https://data.snf.ch/grants/grant/213539):Long-term 
+evolution of the Earth from the base of the mantle to the top of the atmosphere: Understanding the mechanisms leading to 
+‘greenhouse’ and ‘icehouse’ regimes.
