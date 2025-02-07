@@ -79,7 +79,7 @@ class InterpolateRasterDialog(QtWidgets.QDialog, FORM_CLASS):
         selected_items = self.nodes_age_listWidget.selectedItems()
         age_values = [float(item.text().split()[0]) for item in selected_items]
         for age in age_values:
-            sea_level_tools.correct_water_load_TM_simple(age)
+            sea_level_tools.correct_water_load_TM_airy(age)
 
     def interpolate_final_raster(self):
         """

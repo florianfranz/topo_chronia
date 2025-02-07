@@ -142,4 +142,22 @@ class SeaLevel:
             file.write(f"{int(age)}, {initial_volume}, {z_full_volume},{z_after_subsidence}, {abs(factor)}\n")
 
 
+    def correct_water_load_TM_airy(self,age):
+        """
+        Calculates the required sea-level adjustment and corrects for water load based on
+        Airy model and Allen & Allen (2005) equations.
+        """
+        rho_m = 3300
+        rho_w = 1027
+        z_full_volume, initial_volume = self.adjust_sea_level(age, corrected=0)
+        dSL = ((rho_m-rho_w)*z_full_volume)/rho_m
+        subsidence = z_full_volume - dSL
+        self.update_all_nodes_wlc(z_full_volume, age)
+        output_file_path = os.path.join(self.output_folder_path, "water_load_correction_summary.txt")
+        with open(output_file_path, 'a') as file:
+            if file.tell() == 0:
+                file.write("age, initial_volume, z_full_volume, dSL, subsidence\n")
+            file.write(f"{int(age)}, {initial_volume}, {z_full_volume},{dSL}, {subsidence}\n")
+
+
 
