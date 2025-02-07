@@ -34,7 +34,8 @@ TopoChronia runs as a QGIS plugin. It can be used on QGIS version 3.36 or higher
 To install the plugin:
 
 * Manual installation:
-  - Go to the [releases folder](./releases) and download the desired version as a .zip file. 
+  - Go to the [repository homepage](https://github.com/florianfranz/topo_chronia) click on "Code" and "Download ZIP". 
+  ![download_zip](download_zip.png)
   - Open QGIS → Plugins → Manage and Install Plugins → Install from .zip
   - Select the downloaded .zip folder and click on "Install".
 
