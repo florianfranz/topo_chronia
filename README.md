@@ -97,7 +97,7 @@ The picture above shows an example of the nodes distribution for the present-day
 
 The final phase consists of interpolating a raster from the clean nodes layer. We use the QGIS
 Triangulated Network (TIN) as it is the best open-source method to render topography and estimate oceans
-volumes (Franziskakis et al., in prep).
+volumes (Franziskakis et al., submitted).
 
 This last phase is also divided into the following steps:
 
@@ -131,7 +131,7 @@ Python versions you are using as well as your OS.
 
 ## Authors
 
-* **Florian Franziskakis** *florian.franziskakis@unige.ch*
+* **Florian Franziskakis** - *florian.franziskakis@unige.ch*
 * **Christian Vérard**
 * **Grégory Giuliani**
 
@@ -142,6 +142,6 @@ You can view the full license text in the [LICENSE.txt](./LICENSE.txt).
 
 ## Funding
 
-We acknowledge financial support from the Swiss National Science Foundation (SNSF) under [Sinergia grant #213539](https://data.snf.ch/grants/grant/213539):Long-term 
+We acknowledge financial support from the Swiss National Science Foundation (SNSF) under [Sinergia grant #213539](https://data.snf.ch/grants/grant/213539): Long-term 
 evolution of the Earth from the base of the mantle to the top of the atmosphere: Understanding the mechanisms leading to 
 ‘greenhouse’ and ‘icehouse’ regimes.
