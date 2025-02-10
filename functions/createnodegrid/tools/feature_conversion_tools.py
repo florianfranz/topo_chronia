@@ -98,7 +98,7 @@ class FeatureConversionTools:
                 settings_to_check = []
             elif setting == "ISO":
                 settings_to_check = ["PMW", "HOT"]
-                distance_threshold = 2.5
+                distance_threshold = 1.5
             elif setting == "CTN":
                 settings_to_check.append("RIB")
                 settings_to_check.append("CRA")
@@ -107,13 +107,16 @@ class FeatureConversionTools:
                 settings_to_check.remove("CTN")
             elif setting == "RIB":
                 settings_to_check.remove("CTN")
+                settings_to_check.remove("PMW")
             elif setting == "PMW":
                 settings_to_check.remove("ISO")
+                settings_to_check.append("RIB")
+                distance_threshold = 1
             elif setting == "COL":
                 distance_threshold = 1.5
             elif setting == "HOT":
-                settings_to_check.remove("ISO")
-                distance_threshold = 1
+                settings_to_check = []
+                distance_threshold = 0.5
             if settings_to_check:
                 values = "','".join(settings_to_check)
                 expression_to_check_against =f"{param} IN ('{values}')"
@@ -708,3 +711,11 @@ class FeatureConversionTools:
                 "type": "FeatureCollection",
                 "features": all_nodes_features
             }, indent=2))
+
+    def add_layer_to_group(self,layer_path, group_name, setting):
+        root = QgsProject.instance().layerTreeRoot()
+        group = root.findGroup(group_name)
+        if not group:
+            group = root.addGroup(group_name)
+        layer = QgsVectorLayer(layer_path, f"{setting}", "ogr")
+        group.addLayer(layer)

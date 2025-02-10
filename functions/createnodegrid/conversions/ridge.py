@@ -43,5 +43,6 @@ class RIDConversion:
             output_file.write(json.dumps({"type": "FeatureCollection", "features": all_points_features}, indent=2))
         feature_conversion_tools.add_nodes(age, output_points_layer_path, first_build=True)
         feature_conversion_tools.add_id_nodes_setting(age, "RID")
+        feature_conversion_tools.add_layer_to_group(output_points_layer_path, str(int(age)), "RID")
 
 
