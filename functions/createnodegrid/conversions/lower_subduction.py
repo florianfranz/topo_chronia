@@ -122,7 +122,7 @@ class LWSConversion:
                     coords = [vertex[0], vertex[1]]
                     val, res = raster_prelim.dataProvider().sample(point, 1)
                     if math.isnan(val):
-                        raster_depth = -4000
+                        raster_depth = -4500
                     else:
                         raster_depth = float(val)
                     if distance == 0:
