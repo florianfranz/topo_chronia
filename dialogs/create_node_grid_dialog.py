@@ -52,15 +52,14 @@ class ThreadedWorker(QObject):
     progress = pyqtSignal()  # Signal emitted with function name upon progress
     error = pyqtSignal(str)  # Signal emitted when an error occurs
 
-    def __init__(self, func, age_values):
+    def __init__(self, func, age):
         super().__init__()
         self.func = func
-        self.age_values = age_values
+        self.age = age
 
     def process(self):
         try:
-            for age in self.age_values:
-                self.func(age=age)
+            self.func(age=self.age)
             self.progress.emit()  # Emit progress signal
         except Exception as e:
             self.error.emit(f"{self.func.__name__}: {e}")
@@ -174,22 +173,21 @@ class CreateNodeGridDialog(QtWidgets.QDialog, FORM_CLASS):
             except Exception as e:
                 QtWidgets.QMessageBox.critical(self, "Error", f"Pre-thread processing error for age {age}:\n{str(e)}")
                 return
-        functions = [
-            lws_conversion.lower_subduction_to_nodes,
-            aba_conversion.abandoned_arc_to_nodes,
-            pmw_conversion.passive_margin_wedge_to_nodes,
-            ctn_conversion.continent_geode_to_nodes,
-            cra_conversion.craton_to_nodes,
-            otm_conversion.other_margin_to_nodes,
-            pmc_conversion.passive_margin_continent_to_nodes,
-            rib_conversion.rift_to_nodes,
-            ups_conversion.upper_subduction_to_nodes,
-            col_conversion.collision_to_nodes,
-            hot_spot_conversion.hot_spot_to_nodes,
-        ]
-
-        # Start threads for the remaining functions
-        self.start_threads(age_values, functions)
+            functions = [
+                lws_conversion.lower_subduction_to_nodes,
+                aba_conversion.abandoned_arc_to_nodes,
+                pmw_conversion.passive_margin_wedge_to_nodes,
+                ctn_conversion.continent_geode_to_nodes,
+                cra_conversion.craton_to_nodes,
+                otm_conversion.other_margin_to_nodes,
+                pmc_conversion.passive_margin_continent_to_nodes,
+                rib_conversion.rift_to_nodes,
+                ups_conversion.upper_subduction_to_nodes,
+                col_conversion.collision_to_nodes,
+                hot_spot_conversion.hot_spot_to_nodes,
+            ]
+            # Start threads for the remaining functions
+            self.start_threads(age, functions)
 
     def update_progress_bar(self):
         """
@@ -199,7 +197,7 @@ class CreateNodeGridDialog(QtWidgets.QDialog, FORM_CLASS):
         percentage = (self.completed_steps / self.total_steps) * 100
         self.progressBar.setValue(int(percentage))
 
-    def start_threads(self, age_values, functions):
+    def start_threads(self, age, functions):
         """
         Start threads for feature conversion tasks.
         """
@@ -209,7 +207,7 @@ class CreateNodeGridDialog(QtWidgets.QDialog, FORM_CLASS):
             try:
                 # Create a thread and worker instance
                 thread = QThread()
-                worker = ThreadedWorker(func, age_values)
+                worker = ThreadedWorker(func, age)
 
                 # Log worker creation
                 QgsMessageLog.logMessage(f"Worker created for function: {func.__name__}", "Processing", Qgis.Info)
