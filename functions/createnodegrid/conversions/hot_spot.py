@@ -1,5 +1,6 @@
 import os
 import json
+import math
 import processing
 from qgis.core import (Qgis, edit, QgsVectorLayer, QgsFeatureRequest, QgsMessageLog, QgsVectorFileWriter, QgsProject,
                        QgsPointXY, QgsGeometry, QgsRasterLayer, QgsSpatialIndex,QgsProcessingFeatureSourceDefinition,
@@ -26,6 +27,8 @@ class HOTConversion:
         PARAM_GENERAL_CONTINENTZ = 240.38
         PARAM_HS_ContVolcanoZMin = 293 - PARAM_GENERAL_CONTINENTZ
         PARAM_HS_ContVolcanoZMax = 1250 - PARAM_GENERAL_CONTINENTZ
+        raster_prelim_path = os.path.join(self.output_folder_path, f"qgis_tin_raster_prelim_{int(age)}.tif")
+        raster_prelim = QgsRasterLayer(raster_prelim_path, "Preliminary Raster")
         hot_crest = 1500
         ridge_depth = feature_conversion_tools.get_ridge_depth(age)
         dens_HOT_lines_layer_path = os.path.join(self.output_folder_path, f"dens_HOT_lines_{int(age)}.geojson")
@@ -147,7 +150,11 @@ class HOTConversion:
                                                 ridge_depth))
                     else:
                         location = "Oceanic"
-                        raster_depth = -4500
+                        val, res = raster_prelim.dataProvider().sample(point_geom, 1)
+                        if math.isnan(val):
+                            raster_depth = -4500
+                        else:
+                            raster_depth = float(val)
                         hs_z_value = 4500
                         hot_volc_z = raster_depth + hs_z_value
                     centroid_x = point_geom.x()
@@ -223,7 +230,7 @@ class HOTConversion:
                                 }
                             }
                             all_HOT_features.append(HOT_geojson_feature)
-                    crest_buffer = -0.2
+                    crest_buffer = -0.4
                     crest_buffer_polygon = feature.geometry().buffer(crest_buffer, 1)
                     if crest_buffer_polygon.isMultipart():
                         crest_buffer_geometry = crest_buffer_polygon.asMultiPolygon()
