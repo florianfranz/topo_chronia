@@ -128,66 +128,76 @@ class CreateNodeGridDialog(QtWidgets.QDialog, FORM_CLASS):
         Prepares data before features conversion.
         """
         self.progressBar.setValue(0)
-        self.total_steps = 4  # Total steps in the process
+        self.total_steps = 2  # Total steps in the process
         self.completed_steps = 0
         selected_items = self.age_listWidget.selectedItems()
         age_values = [float(item.text().split()[0]) for item in selected_items]
-        functions = [
-            data_preparation.aggregate_plate_polygons_new,
-            data_preparation.aggregate_continent_polygons,
-            #data_preparation.set_raster_name_coll,
-            data_preparation.prepare_plate_model,
-            data_preparation.check_shape_length
-        ]
-        self.start_threads(age_values, functions)
+        for age in age_values:
+            data_preparation.aggregate_plate_polygons_new(age)
+            data_preparation.aggregate_continent_polygons(age)
+
 
     def convert_features(self):
         """
-        Main function to start feature conversion with threads and measure elapsed time.
+        Start feature conversion for the first selected age and ensure sequential processing.
         """
         self.progressBar.setValue(0)
-        self.total_steps = 15  # Total steps in the process
+        self.total_steps = 15
         self.completed_steps = 0
-        self.start_time = time.time()  # Track start time
+        self.start_time = time.time()
 
         # Get selected ages
         selected_items = self.age_listWidget.selectedItems()
-        age_values = [float(item.text().split()[0]) for item in selected_items]
-        self.age_values = age_values  # Save for later use in write_elapsed_time
+        self.age_values = [float(item.text().split()[0]) for item in selected_items]
+        self.total_steps = 15 * len(self.age_values) # 15 steps per reconstruction
 
-        if not age_values:
+        if not self.age_values:
             QtWidgets.QMessageBox.warning(self, "No Selection", "Please select at least one age.")
             return
 
-        # Pre-thread processing
-        for age in age_values:
-            try:
-                lines_selections.select_lines(age=age)
-                self.update_progress_bar()
-                rid_conversion.ridge_to_nodes(age=age)
-                self.update_progress_bar()
-                iso_conversion.isochron_to_nodes(age=age)
-                self.update_progress_bar()
-                raster_tools.generate_temporary_raster(age=age)
-                self.update_progress_bar()
-            except Exception as e:
-                QtWidgets.QMessageBox.critical(self, "Error", f"Pre-thread processing error for age {age}:\n{str(e)}")
-                return
-            functions = [
-                lws_conversion.lower_subduction_to_nodes,
-                aba_conversion.abandoned_arc_to_nodes,
-                pmw_conversion.passive_margin_wedge_to_nodes,
-                ctn_conversion.continent_geode_to_nodes,
-                cra_conversion.craton_to_nodes,
-                otm_conversion.other_margin_to_nodes,
-                pmc_conversion.passive_margin_continent_to_nodes,
-                rib_conversion.rift_to_nodes,
-                ups_conversion.upper_subduction_to_nodes,
-                col_conversion.collision_to_nodes,
-                hot_spot_conversion.hot_spot_to_nodes,
-            ]
-            # Start threads for the remaining functions
-            self.start_threads(age, functions)
+        self.current_age_index = 0  # Track which age we're processing
+        self.process_next_age()  # Start the first age
+
+    def process_next_age(self):
+        """
+        Process the next age in the list after the previous one completes.
+        """
+        if self.current_age_index >= len(self.age_values):
+            QgsMessageLog.logMessage("All ages processed.", "Processing", Qgis.Info)
+            self.write_elapsed_time()  # Log final time
+            return
+
+        age = self.age_values[self.current_age_index]
+        self.threads = []  # Reset threads for this age
+        self.remaining_threads = 0  # Track active threads
+
+        QgsMessageLog.logMessage(f"Starting processing for age {age}", "Processing", Qgis.Info)
+
+        # Run initial processing functions
+        lines_selections.select_lines(age=age)
+        self.update_progress_bar()
+        rid_conversion.ridge_to_nodes(age=age)
+        self.update_progress_bar()
+        iso_conversion.isochron_to_nodes(age=age)
+        self.update_progress_bar()
+        raster_tools.generate_temporary_raster(age=age)
+        self.update_progress_bar()
+
+        functions = [
+            lws_conversion.lower_subduction_to_nodes,
+            aba_conversion.abandoned_arc_to_nodes,
+            pmw_conversion.passive_margin_wedge_to_nodes,
+            ctn_conversion.continent_geode_to_nodes,
+            cra_conversion.craton_to_nodes,
+            otm_conversion.other_margin_to_nodes,
+            pmc_conversion.passive_margin_continent_to_nodes,
+            rib_conversion.rift_to_nodes,
+            ups_conversion.upper_subduction_to_nodes,
+            col_conversion.collision_to_nodes,
+            hot_spot_conversion.hot_spot_to_nodes
+        ]
+
+        self.start_threads(age, functions)
 
     def update_progress_bar(self):
         """
@@ -199,50 +209,48 @@ class CreateNodeGridDialog(QtWidgets.QDialog, FORM_CLASS):
 
     def start_threads(self, age, functions):
         """
-        Start threads for feature conversion tasks.
+        Start threads for feature conversion tasks and ensure they all complete before processing the next age.
         """
-        QgsMessageLog.logMessage("Starting threads...", "Processing", Qgis.Info)  # Log the start of thread processing
+        QgsMessageLog.logMessage(f"Starting threads for age {age}...", "Processing", Qgis.Info)
+
+        self.remaining_threads = len(functions)  # Track active threads
 
         for func in functions:
             try:
-                # Create a thread and worker instance
                 thread = QThread()
                 worker = ThreadedWorker(func, age)
 
-                # Log worker creation
-                QgsMessageLog.logMessage(f"Worker created for function: {func.__name__}", "Processing", Qgis.Info)
-                QgsMessageLog.logMessage(f"Worker signals: {dir(worker)}", "Processing",
-                                         Qgis.Info)  # Log available signals
-
                 worker.moveToThread(thread)
 
-                # Connect worker signals to appropriate slots
-                worker.finished.connect(self.check_thread_completion)
-                QgsMessageLog.logMessage(f"Connected 'finished' signal for {func.__name__}.", "Processing", Qgis.Info)
-
+                # Connect signals
+                worker.finished.connect(self.thread_finished)
                 worker.error.connect(self.thread_error)
-                QgsMessageLog.logMessage(f"Connected 'error' signal for {func.__name__}.", "Processing", Qgis.Info)
-
                 worker.progress.connect(self.update_progress_bar)
-                QgsMessageLog.logMessage(f"Connected 'progress' signal for {func.__name__}.", "Processing", Qgis.Info)
-
                 thread.started.connect(worker.process)
-                QgsMessageLog.logMessage(f"Connected 'started' signal for {func.__name__}.", "Processing", Qgis.Info)
 
-                # Keep track of threads and workers
                 self.threads.append((thread, worker))
-
-                # Start the thread
                 thread.start()
-                QgsMessageLog.logMessage(f"Thread started for function: {func.__name__}", "Processing", Qgis.Info)
 
             except Exception as e:
-                # Log any errors during thread initialization
-                QgsMessageLog.logMessage(
-                    f"Error initializing thread for {func.__name__}: {str(e)}",
-                    "Processing",
-                    Qgis.Critical,
-                )
+                QgsMessageLog.logMessage(f"Error initializing thread for {func.__name__}: {str(e)}", "Processing",
+                                         Qgis.Critical)
+
+    def thread_finished(self):
+        """
+        Called when a thread finishes. If all threads are done, start the next age.
+        """
+        self.remaining_threads -= 1  # Reduce active thread count
+
+        if self.remaining_threads == 0:  # If all threads for this age are done
+            QgsMessageLog.logMessage(f"All threads finished for age {self.age_values[self.current_age_index]}.",
+                                     "Processing", Qgis.Info)
+
+            #CLEAN UP THREADS BEFORE MOVING TO THE NEXT AGE
+            self.cleanup_threads()
+
+            # Move to the next age
+            self.current_age_index += 1
+            self.process_next_age()  # Start processing next age
 
     def check_thread_completion(self):
         """
@@ -324,14 +332,15 @@ class CreateNodeGridDialog(QtWidgets.QDialog, FORM_CLASS):
 
     def cleanup_threads(self):
         """
-        Clean up threads after processing.
+        Properly clean up all threads before starting a new age.
         """
         for thread, worker in self.threads:
-            worker.deleteLater()
-            thread.quit()
-            thread.wait()
-            thread.deleteLater()
-        self.threads = []
+            worker.deleteLater()  # Delete worker object
+            thread.quit()  # Ask the thread to quit
+            thread.wait()  # Wait for thread to fully stop
+            thread.deleteLater()  # Delete thread object
+
+        self.threads = []  # Reset thread list
 
     def merge_all_nodes(self):
         """
