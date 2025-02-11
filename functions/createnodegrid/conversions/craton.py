@@ -182,3 +182,4 @@ class CRAConversion:
                 "features": all_points_features
             }, indent=2))
         feature_conversion_tools.add_id_nodes_setting(age, "CRA")
+        feature_conversion_tools.add_layer_to_group(output_points_layer_path, f"{int(age)} Ma", "CRA")

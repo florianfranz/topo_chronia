@@ -61,3 +61,4 @@ class ISOConversion:
             output_file.write(json.dumps({"type": "FeatureCollection","features": all_points_features}, indent=2))
         feature_conversion_tools.add_nodes(age,output_points_layer_path,first_build=False)
         feature_conversion_tools.add_id_nodes_setting(age, "ISO")
+        feature_conversion_tools.add_layer_to_group(output_points_layer_path, f"{int(age)} Ma", "ISO")

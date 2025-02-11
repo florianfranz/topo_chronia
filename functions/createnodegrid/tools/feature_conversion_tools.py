@@ -718,4 +718,5 @@ class FeatureConversionTools:
         if not group:
             group = root.addGroup(group_name)
         layer = QgsVectorLayer(layer_path, f"{setting}", "ogr")
+        QgsProject.instance().addMapLayer(layer, False)
         group.addLayer(layer)
