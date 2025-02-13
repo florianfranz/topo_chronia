@@ -39,8 +39,9 @@ class SeaLevel:
                                   'METHOD': 1
                                   })
         volume = results["VOLUME"]
+        area = results["AREA"]
         volume = -volume
-        return volume
+        return volume, area
 
     def adjust_sea_level(self, age, corrected):
         """
@@ -49,64 +50,65 @@ class SeaLevel:
         ref_oc_volume = -self.etopo_volume
         z = 0
         # Coarse adjustment with 50m steps
-        volume = self.calculate_volume(age, z, corrected)
+        volume,area = self.calculate_volume(age, z, corrected)
         initial_volume = volume
+        initial_area = area
         QgsMessageLog.logMessage(f"Initial volume is {initial_volume}", "Interpolate Raster", Qgis.Info)
         while volume > ref_oc_volume:
             z -= 50
-            volume = self.calculate_volume(age, z, corrected)
+            volume,area = self.calculate_volume(age, z, corrected)
             QgsMessageLog.logMessage(f"Decreasing elevation to {z}, calculated volume: {volume}", "Interpolate Raster", Qgis.Info)
         while volume < ref_oc_volume:
             z += 50
-            volume = self.calculate_volume(age, z, corrected)
+            volume,area = self.calculate_volume(age, z, corrected)
             QgsMessageLog.logMessage(f"Increasing elevation to {z}, calculated volume: {volume}", "Interpolate Raster", Qgis.Info)
 
         # Medium adjustment with 10m steps
-        volume = self.calculate_volume(age, z, corrected)
+        volume,area = self.calculate_volume(age, z, corrected)
         while volume > ref_oc_volume:
             z -= 10
-            volume = self.calculate_volume(age, z, corrected)
+            volume,area = self.calculate_volume(age, z, corrected)
             QgsMessageLog.logMessage(f"Decreasing elevation to {z}, calculated volume: {volume}", "Interpolate Raster", Qgis.Info)
         while volume < ref_oc_volume:
             z += 10
-            volume = self.calculate_volume(age, z, corrected)
+            volume,area = self.calculate_volume(age, z, corrected)
             QgsMessageLog.logMessage(f"Increasing elevation to {z}, calculated volume: {volume}", "Interpolate Raster", Qgis.Info)
 
         # Fine adjustment with 5m steps
-        volume = self.calculate_volume(age, z, corrected)
+        volume,area = self.calculate_volume(age, z, corrected)
         while volume > ref_oc_volume:
             z -= 5
-            volume = self.calculate_volume(age, z, corrected)
+            volume,area = self.calculate_volume(age, z, corrected)
             QgsMessageLog.logMessage(f"Decreasing elevation to {z}, calculated volume: {volume}", "Interpolate Raster", Qgis.Info)
         while volume < ref_oc_volume:
             z += 5
-            volume = self.calculate_volume(age, z, corrected)
+            volume,area = self.calculate_volume(age, z, corrected)
             QgsMessageLog.logMessage(f"Increasing elevation to {z}, calculated volume: {volume}", "Interpolate Raster", Qgis.Info)
 
         # Final adjustment with 1m steps
-        volume = self.calculate_volume(age, z, corrected)
+        volume,area = self.calculate_volume(age, z, corrected)
         while volume > ref_oc_volume:
             z -= 1
-            volume = self.calculate_volume(age, z, corrected)
+            volume,area = self.calculate_volume(age, z, corrected)
             QgsMessageLog.logMessage(f"Decreasing elevation to {z}, calculated volume: {volume}", "Interpolate Raster", Qgis.Info)
         while volume < ref_oc_volume:
             z += 1
-            volume = self.calculate_volume(age, z, corrected)
+            volume,area = self.calculate_volume(age, z, corrected)
             QgsMessageLog.logMessage(f"Increasing elevation to {z}, calculated volume: {volume}", "Interpolate Raster", Qgis.Info)
         QgsMessageLog.logMessage(f"final corrected z is {z}", "Interpolate Raster", Qgis.Info)
         sea_level = z
 
-        return sea_level, initial_volume
+        return sea_level, area, initial_volume, initial_area
 
 
     def correct_water_load_newest(self,age):
-        z_full_volume, initial_volume = self.adjust_sea_level(age, corrected=0)
+        z_full_volume, area_full_volume, initial_volume, initial_area = self.adjust_sea_level(age, corrected=0)
         dSL, subsidence = self.update_all_nodes_wlc_newest(z_full_volume,age)
         output_file_path = os.path.join(self.output_folder_path, "water_load_correction_summary.txt")
         with open(output_file_path, 'a') as file:
             if file.tell() == 0:
-                file.write("age, initial_volume, z_full_volume, dSL, subsidence\n")
-            file.write(f"{int(age)}, {initial_volume}, {z_full_volume},{dSL}, {subsidence}\n")
+                file.write("age, initial_volume, initial_area, z_full_volume, area_full_volume dSL, subsidence\n")
+            file.write(f"{int(age)}, {initial_volume}, {initial_area}, {z_full_volume}, {area_full_volume}, {dSL}, {subsidence}\n")
 
 
     def update_all_nodes_wlc_newest(self, z_full_volume,age):

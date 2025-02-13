@@ -87,11 +87,11 @@ class InterpolateRasterDialog(QtWidgets.QDialog, FORM_CLASS):
         elevation values.
         """
         output_folder_path = base_tools.get_layer_path("Output Folder")
-        output_file_path = os.path.join(output_folder_path, "water_load_correction_summary.txt")
+        output_file_path = os.path.join(output_folder_path, "water_load_correction_summary_f.txt")
         selected_items = self.nodes_age_listWidget.selectedItems()
         age_values = [float(item.text().split()[0]) for item in selected_items]
         for age in age_values:
             raster_tools.perform_final_raster_interpolation(age)
-            z_full_volume, volume = sea_level_tools.adjust_sea_level(age, corrected=1)
+            z_full_volume, area_full_volume, initial_volume, initial_area = sea_level_tools.adjust_sea_level(age, corrected=1)
             with open(output_file_path, 'a') as file:
-                file.write(f"After correction, full volume is reached by changing the sea-levle by {z_full_volume}m\n")
+                file.write(f"For age {age}, after correction, full volume is reached by changing the sea-level by {z_full_volume}m\n")
