@@ -30,7 +30,7 @@ class SeaLevel:
         if count == 0:
             dem_path = os.path.join(self.output_folder_path, f"raster_{int(age)}_filled.tif")
         else:
-            dem_path = os.path.join(self.output_folder_path, f"raster_{int(age)}_filled.tif")
+            dem_path = os.path.join(self.output_folder_path, f"raster_final_filled_{int(age)}.tif")
 
         results = processing.run("native:rastersurfacevolume",
                                  {'BAND': 1,
@@ -98,61 +98,10 @@ class SeaLevel:
 
         return sea_level, initial_volume
 
-    def update_all_nodes_wlc(self, z_water_load_corrected, age):
-        """
-        Updates the all nodes layer with the water load corrected elevation value.
-        """
-        output_folder_path = base_tools.get_layer_path("Output Folder")
-        all_nodes_layer_path = os.path.join(output_folder_path, f"reproj_all_nodes_{int(age)}.geojson")
-        all_nodes_layer = QgsVectorLayer(all_nodes_layer_path, f"All Nodes {int(age)}", "ogr")
-        all_nodes_provider = all_nodes_layer.dataProvider()
-        all_nodes_provider.addAttributes([QgsField('Z_WLC', QVariant.Double)])
-        all_nodes_layer.updateFields()
-        all_nodes_layer.commitChanges()
 
-        field_idx_zwlc = all_nodes_layer.fields().indexOf('Z_WLC')
-        with edit(all_nodes_layer):
-            for node in all_nodes_layer.getFeatures():
-                if node.attribute("Z"):
-                    original_z = node.attribute('Z')
-                    if original_z > z_water_load_corrected:
-                        final_z = original_z
-                    else:
-                        final_z = original_z - z_water_load_corrected
-                    all_nodes_layer.changeAttributeValue(node.id(), field_idx_zwlc, final_z)
-                else:
-                    pass
-        all_nodes_layer.commitChanges()
-
-    def correct_water_load_TM_simple(self,age):
-        """
-        Calculates the required sea-level adjustment and corrects for water load based on
-        Airy model.
-        """
-        rho_m = 3300
-        rho_w = 1027
+    def correct_water_load_newest(self,age):
         z_full_volume, initial_volume = self.adjust_sea_level(age, corrected=0)
-        z_after_subsidence = (1 - (rho_w / rho_m)) * z_full_volume
-        factor = 0.55*z_full_volume
-        self.update_all_nodes_wlc(factor, age)
-        output_file_path = os.path.join(self.output_folder_path, "water_load_correction_summary.txt")
-        with open(output_file_path, 'a') as file:
-            if file.tell() == 0:
-                file.write("age, initial_volume, z_full_volume, z_after_subsidence, airy corrected sea level\n")
-            file.write(f"{int(age)}, {initial_volume}, {z_full_volume},{z_after_subsidence}, {abs(factor)}\n")
-
-
-    def correct_water_load_TM_airy(self,age):
-        """
-        Calculates the required sea-level adjustment and corrects for water load based on
-        Airy model and Allen & Allen (2005) equations.
-        """
-        rho_m = 3300
-        rho_w = 1027
-        z_full_volume, initial_volume = self.adjust_sea_level(age, corrected=0)
-        dSL = ((rho_m-rho_w)*z_full_volume)/rho_m
-        subsidence = z_full_volume - dSL
-        self.update_all_nodes_wlc(z_full_volume, age)
+        dSL, subsidence = self.update_all_nodes_wlc_newest(z_full_volume,age)
         output_file_path = os.path.join(self.output_folder_path, "water_load_correction_summary.txt")
         with open(output_file_path, 'a') as file:
             if file.tell() == 0:
@@ -160,4 +109,55 @@ class SeaLevel:
             file.write(f"{int(age)}, {initial_volume}, {z_full_volume},{dSL}, {subsidence}\n")
 
 
+    def update_all_nodes_wlc_newest(self, z_full_volume,age):
+        output_folder_path = base_tools.get_layer_path("Output Folder")
+        all_nodes_layer_path = os.path.join(output_folder_path, f"reproj_all_nodes_{int(age)}.geojson")
+        rho_m = 3300
+        rho_w = 1027
+        dSL = ((rho_m - rho_w) * z_full_volume) / rho_m
+        buoy_fac = (rho_m - rho_w) / rho_w
+        subsidence = dSL / buoy_fac
 
+
+        all_nodes_layer = QgsVectorLayer(all_nodes_layer_path, f"All Nodes {int(age)}", "ogr")
+        all_nodes_provider = all_nodes_layer.dataProvider()
+        all_nodes_provider.addAttributes([QgsField('Z_WLC', QVariant.Double),
+                                          QgsField('DSL', QVariant.Double),
+                                          QgsField('SUBS', QVariant.Double),
+                                          QgsField('OWH', QVariant.Double)])
+
+        all_nodes_layer.updateFields()
+        all_nodes_layer.commitChanges()
+
+        field_idx_zwlc = all_nodes_layer.fields().indexOf('Z_WLC')
+        field_idx_dsl = all_nodes_layer.fields().indexOf('DSL')
+        field_idx_subs = all_nodes_layer.fields().indexOf('SUBS')
+        field_idx_owh = all_nodes_layer.fields().indexOf('OWH')
+        with edit(all_nodes_layer):
+            for node in all_nodes_layer.getFeatures():
+                if node.attribute("Z"):
+                    z_initial = node.attribute('Z')
+                    if z_initial >= 0:
+                        water_column = 0
+                    else:
+                        water_column = -z_initial
+                    z_with_dSL = z_initial - dSL
+                    if z_with_dSL >= 0:
+                        subsidence_cor = 0
+                        dSL_cor = 0
+                    elif 0 > z_with_dSL >= -dSL:
+                        subsidence_cor = z_with_dSL / buoy_fac
+                        dSL_cor = - z_with_dSL
+                    elif z_with_dSL < - dSL:
+                        subsidence_cor = -subsidence
+                        dSL_cor = -(z_with_dSL - z_initial)
+                    else:
+                        subsidence_cor = 45771972
+                        dSL_cor = 894728
+                    z_wlc = z_with_dSL + subsidence_cor
+                    all_nodes_layer.changeAttributeValue(node.id(), field_idx_zwlc, z_wlc)
+                    all_nodes_layer.changeAttributeValue(node.id(), field_idx_dsl, dSL_cor)
+                    all_nodes_layer.changeAttributeValue(node.id(), field_idx_subs,-subsidence_cor)
+                    all_nodes_layer.changeAttributeValue(node.id(), field_idx_owh, water_column)
+        all_nodes_layer.commitChanges()
+        return dSL, subsidence
