@@ -89,7 +89,7 @@ class FeatureConversionTools:
 
         nodes_to_delete = []
         for setting in settings:
-            distance_threshold = 0.5
+            distance_threshold = 0.9
             settings_to_check = []
             expression_setting = f"{param} = '{setting}'"
             index = settings.index(setting)
@@ -100,22 +100,22 @@ class FeatureConversionTools:
                 settings_to_check = ["PMW", "HOT"]
                 distance_threshold = 1.5
             elif setting == "CTN":
-                settings_to_check.append("RIB")
-                settings_to_check.append("CRA")
-                distance_threshold = 1
+                settings_to_check = ["RID", "ISO", "LWS", "ABA", "PMW", "CRA", "OTM", "PMC", "RIB", "UPS", "COL", "HOT"]
             elif setting == "CRA":
                 settings_to_check.remove("CTN")
+                settings_to_check.append("PMC")
             elif setting == "RIB":
                 settings_to_check.remove("CTN")
                 settings_to_check.remove("PMW")
             elif setting == "PMW":
                 settings_to_check.remove("ISO")
                 settings_to_check.append("RIB")
-                distance_threshold = 1
+            elif setting == "PMC":
+                settings_to_check.remove("CRA")
             elif setting == "COL":
                 distance_threshold = 1.5
             elif setting == "HOT":
-                settings_to_check = []
+                settings_to_check = ["PMC", "PMW"]
                 distance_threshold = 0.5
             if settings_to_check:
                 values = "','".join(settings_to_check)
@@ -128,6 +128,8 @@ class FeatureConversionTools:
                 )
                 for feature in all_nodes_layer.getFeatures(QgsFeatureRequest().setFilterExpression(expression_setting)):
                     geometry = feature.geometry()
+                    if feature.attribute("TYPE") == "COL" and feature.attribute("FEAT_AGE") > 330:
+                        nodes_to_delete.append(feature.id())
                     bbox = geometry.boundingBox()
                     candidate_ids_other = spatial_index_other.intersects(bbox.buffered(distance_threshold))
                     for candidate_id in candidate_ids_other:
@@ -263,7 +265,7 @@ class FeatureConversionTools:
         index (spi) to speed up the processing.
         """
         profile_points = profile_geometry.asMultiPoint()
-        buffer_distance = 0.20
+        buffer_distance = 0.9
         cut_profile = QgsMultiPoint()  # Initialize the result geometry
         cut_profile.addGeometry(QgsPoint(profile_points[0]))  # Always add the first point
 
@@ -633,6 +635,7 @@ class FeatureConversionTools:
                 feature_age = new_node_feature.attribute('FEAT_AGE')
                 distance = new_node_feature.attribute('DIST')
                 z = new_node_feature.attribute('Z_WITH_SED')
+                plate = new_node_feature.attribute('PLATE')
                 if isinstance(z, QVariant):
                     pass
                 elif not isinstance(z, float):
@@ -656,7 +659,8 @@ class FeatureConversionTools:
                                 "FEAT_AGE": feature_age,
                                 "DIST": distance,
                                 "Z": z,
-                                "ID": 45771972
+                                "ID": 45771972,
+                                "PLATE" : plate
                             },
                             "geometry": {
                                 "type": "Point",
@@ -675,6 +679,7 @@ class FeatureConversionTools:
                 feature_age = new_node_feature.attribute('FEAT_AGE')
                 distance = new_node_feature.attribute('DIST')
                 z = new_node_feature.attribute('Z_WITH_SED')
+                plate = new_node_feature.attribute('PLATE')
                 if isinstance(z, QVariant):
                     pass
                 elif not isinstance(z, float):
@@ -698,7 +703,8 @@ class FeatureConversionTools:
                                 "FEAT_AGE": feature_age,
                                 "DIST": distance,
                                 "Z": z,
-                                "ID": 45771972
+                                "ID": 45771972,
+                                "PLATE": plate
                             },
                             "geometry": {
                                 "type": "Point",

@@ -16,6 +16,8 @@ feature_conversion_tools = FeatureConversionTools()
 
 class PMWConversion:
     INPUT_FILE_PATH = "input_files.txt"
+    continent_polygons_path = base_tools.get_layer_path("Continent Polygons")
+    continent_polygons_layer = QgsVectorLayer(continent_polygons_path, "Continent Polygons", 'ogr')
     output_folder_path = base_tools.get_layer_path("Output Folder")
 
     def __init__(self):
@@ -23,9 +25,6 @@ class PMWConversion:
     def passive_margin_wedge_to_nodes(self,age):
         x_min = 0
         step_length = 50
-        continent_polygons_layer_path = os.path.join(self.output_folder_path,
-                                                     f"continent_polygons_age_{int(age)}.geojson")
-        continent_polygons_layer = QgsVectorLayer(continent_polygons_layer_path, "Aggregated Continents", "ogr")
         raster_prelim_path = os.path.join(self.output_folder_path,f"qgis_tin_raster_prelim_{int(age)}.tif")
         raster_prelim = QgsRasterLayer(raster_prelim_path,"Preliminary Raster")
         pmw_multipoint_path = os.path.join(self.output_folder_path, f"pmw_multipoint_{int(age)}.geojson")
@@ -86,7 +85,7 @@ class PMWConversion:
                     feature = QgsFeature()
                     profile_geometry = feature_conversion_tools.create_profile(point1,point2,x_min,-x_max,step_length, flag, "normal")
                     if profile_geometry:
-                        cont_included_profile_geometry = feature_conversion_tools.cut_profile_spi(profile_geometry, continent_polygons_layer, "keep outside", "positive", age, False)
+                        cont_included_profile_geometry = feature_conversion_tools.cut_profile_spi(profile_geometry, self.continent_polygons_layer, "keep outside", "positive", age, False)
                         if cont_included_profile_geometry:
                             final_profile_geometry = feature_conversion_tools.check_profile_intersection(cont_included_profile_geometry,spatial_index_profiles, geometry_dict_profiles)
                             if final_profile_geometry:

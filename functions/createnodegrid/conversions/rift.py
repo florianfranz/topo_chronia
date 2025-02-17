@@ -28,8 +28,8 @@ class RIBConversion:
         x_max_int = 201
         continent_polygons_layer_path = os.path.join(self.output_folder_path,f"continent_polygons_age_{int(age)}.geojson")
         agg_continent_polygon_layer = QgsVectorLayer(continent_polygons_layer_path, "Aggregated Continents", "ogr")
-        basins_multipolygons_path = os.path.join(self.output_folder_path, f"pre_basins_multipolygons_{int(age)}.geojson")
-        basins_polygon_layer = QgsVectorLayer(basins_multipolygons_path, "Aggregated Basins", "ogr")
+        basins_polygons_path = os.path.join(self.output_folder_path, f"RIB_polygons_{int(age)}_final.geojson")
+        basins_polygon_layer = QgsVectorLayer(basins_polygons_path, "Aggregated Basins", "ogr")
         dens_RIB_layer_path = os.path.join(self.output_folder_path, f"dens_RIB_lines_{int(age)}.geojson")
         dens_RIB_lines = QgsVectorLayer(dens_RIB_layer_path, "Densified RIB Lines", 'ogr')
         RIB_multipoints = QgsVectorLayer("MultiPoint?crs=EPSG:4326", "RIB Multipoints", "memory")

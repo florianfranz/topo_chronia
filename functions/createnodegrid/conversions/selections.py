@@ -2,7 +2,7 @@ import os
 import json
 import processing
 from qgis.core import (Qgis, QgsFeatureRequest, QgsMessageLog, QgsVectorLayer, QgsField, QgsVectorFileWriter,
-                       edit, QgsSpatialIndex, QgsPointXY, QgsGeometry,QgsFeature)
+                       edit, QgsSpatialIndex, QgsPointXY, QgsGeometry,QgsFeature,QgsProcessingFeatureSourceDefinition)
 from qgis.PyQt.QtCore import QVariant
 
 
@@ -306,6 +306,7 @@ class LinesSelections():
         all_polygons = []
         for feature in dens_RIB_layer.getFeatures():
             orig_id = feature.attribute('ORIG_ID')
+            plate = feature.attribute('PLATE')
             feature_level_coords = []
             if feature.geometry().isMultipart():
                 geom = feature.geometry().asMultiPolyline()
@@ -325,7 +326,9 @@ class LinesSelections():
                             "type": "Feature",
                             "properties": {
                                 "TYPE": "Basin",
-                                "ORIG_ID": int(orig_id)
+                                "ORIG_ID": int(orig_id),
+                                "APPEARANCE": age,
+                                "PLATE": plate
                             },
                             "geometry": {
                                 "type": "Polygon",
@@ -351,7 +354,9 @@ class LinesSelections():
                         "type": "Feature",
                         "properties": {
                             "TYPE": "Basin",
-                            "ORIG_ID": int(orig_id)
+                            "ORIG_ID": int(orig_id),
+                            "APPEARANCE": age,
+                            "PLATE": plate
                         },
                         "geometry": {
                             "type": "Polygon",
@@ -361,9 +366,8 @@ class LinesSelections():
                     all_polygons.append(polygon_feature)
 
         # Write all aggregated multipolygon features to the output GeoJSON file
-        pre_basins_multipolygons_path = os.path.join(self.output_folder_path,
-                                                     f"pre_basins_multipolygons_{int(age)}.geojson")
-        with open(pre_basins_multipolygons_path, 'w') as output_file:
+        RIB_polygons_path = os.path.join(self.output_folder_path, f"RIB_polygons_{int(age)}_final.geojson")
+        with open(RIB_polygons_path, 'w') as output_file:
             output_file.write(json.dumps({
                 "type": "FeatureCollection",
                 "features": all_polygons
@@ -394,6 +398,7 @@ class LinesSelections():
         for feature in dens_CRA_layer.getFeatures():
             feature_orig_id = feature.id()
             name_terr = feature.attribute("NAME_TERR")
+            plate = feature.attribute("PLATE")
             if not name_terr:
                 name_terr = "NONE"
             if feature.geometry().isMultipart():
@@ -416,7 +421,9 @@ class LinesSelections():
                         "properties": {
                             "TYPE": "Craton",
                             "ORIG_ID": feature_orig_id,
-                            "NAME_TERR": name_terr
+                            "NAME_TERR": name_terr,
+                            "APPEARANCE": age,
+                            "PLATE": plate
                         },
                         "geometry": {
                             "type": "Polygon",
@@ -426,8 +433,8 @@ class LinesSelections():
                     all_craton_polygons.append(geojson_feature)
             else:
                 QgsMessageLog.logMessage("original line is not multipart")
-        craton_polygons_path = os.path.join(self.output_folder_path, f"CRA_aggreg_polyg_{int(age)}.geojson")
-        with open(craton_polygons_path, 'w') as output_file:
+        CRA_polygons_path = os.path.join(self.output_folder_path, f"CRA_polygons_{int(age)}_final.geojson")
+        with open(CRA_polygons_path, 'w') as output_file:
             output_file.write(json.dumps({
                 "type": "FeatureCollection",
                 "features": all_craton_polygons
@@ -512,16 +519,91 @@ class LinesSelections():
         original_HOT_layer_path = os.path.join(self.output_folder_path, f"original_HOT_lines_{int(age)}.geojson")
         QgsVectorFileWriter.writeAsVectorFormat(HOT_lines_layer, original_HOT_layer_path, 'utf-8',
                                                 HOT_lines_layer.crs(), "GeoJSON")
-        dens_HOT_layer_path = feature_conversion_tools.harmonize_lines_geometry(original_HOT_layer_path,
+        dens_HOT_lines_layer_path = feature_conversion_tools.harmonize_lines_geometry(original_HOT_layer_path,
                                                                                 tolerance_value=0.5)
-        HOT_line_buffer_uf_path = os.path.join(self.output_folder_path, f"HOT_lines_buffer_uf_{int(age)}.geojson")
-        pre_HOT_line_buffer_path = os.path.join(self.output_folder_path, f"pre_HOT_lines_buffer_{int(age)}.geojson")
-        processing.run("native:buffer",
-                       {'INPUT': dens_HOT_layer_path,
-                        'DISTANCE': 1, 'SEGMENTS': 5, 'END_CAP_STYLE': 0, 'JOIN_STYLE': 0, 'MITER_LIMIT': 2,
-                        'DISSOLVE': False, 'SEPARATE_DISJOINT': True, 'OUTPUT': HOT_line_buffer_uf_path})
-        processing.run("native:deleteholes", {
-            'INPUT': HOT_line_buffer_uf_path,
-            'MIN_AREA': 0, 'OUTPUT': pre_HOT_line_buffer_path})
-
-        HOT_final_path = feature_conversion_tools.create_multipart_polygons(pre_HOT_line_buffer_path)
+        dens_HOT_layer = QgsVectorLayer(dens_HOT_lines_layer_path, "Densified HOT layer", "ogr")
+        HOT_features = list(dens_HOT_layer.getFeatures())
+        if len(HOT_features) == 0:
+            return
+        else:
+            all_polygons = []
+            for feature in dens_HOT_layer.getFeatures():
+                feat_age = feature.attribute("AGE") - age
+                orig_id = feature.id()
+                plate = feature.attribute("PLATE")
+                feature_level_coords = []
+                if feature.geometry().isMultipart():
+                    geom = feature.geometry().asMultiPolyline()
+                    for part in geom:
+                        if len(part) <= 3:
+                            pass
+                        else:
+                            polygon_coords = []
+                            for vertex in part:
+                                x_coord = vertex.x()
+                                y_coord = vertex.y()
+                                coords = [x_coord, y_coord]
+                                polygon_coords.append(coords)
+                            if polygon_coords[0] != polygon_coords[-1]:
+                                polygon_coords.append(polygon_coords[0])
+                            polygon_feature = {
+                                "type": "Feature",
+                                "properties": {
+                                    "TYPE": "HOT",
+                                    "ORIG_ID": int(orig_id),
+                                    "FEAT_AGE": feat_age,
+                                    "PLATE": plate
+                                },
+                                "geometry": {
+                                    "type": "Polygon",
+                                    "coordinates": [polygon_coords]
+                                }
+                            }
+                            all_polygons.append(polygon_feature)
+                else:
+                    geom = feature.geomtry().asPolyline()
+                    if len(geom) <= 3:
+                        pass
+                    else:
+                        polygon_coords = []
+                        for vertex in geom:
+                            x_coord = vertex.x()
+                            y_coord = vertex.y()
+                            coords = [x_coord, y_coord]
+                            polygon_coords.append(coords)
+                        if polygon_coords[0] != polygon_coords[-1]:
+                            polygon_coords.append(polygon_coords[0])
+                        feature_level_coords.append(polygon_coords)
+                        polygon_feature = {
+                            "type": "Feature",
+                            "properties": {
+                                "TYPE": "HOT",
+                                "ORIG_ID": int(orig_id),
+                                "FEAT_AGE": feat_age,
+                                "APPEARANCE": age,
+                                "PLATE": plate
+                            },
+                            "geometry": {
+                                "type": "Polygon",
+                                "coordinates": [polygon_coords]
+                            }
+                        }
+                        all_polygons.append(polygon_feature)
+            output_polygons_layer_path = os.path.join(self.output_folder_path, f"HOT_polygons_{int(age)}.geojson")
+            fixed_polygon_layer_path = output_polygons_layer_path.replace(f"{int(age)}.geojson",
+                                                                          f"{int(age)}_fixed.geojson")
+            diss_polygon_layer_path = os.path.join(self.output_folder_path, f"HOT_polygons_{int(age)}_final.geojson")
+            with open(output_polygons_layer_path, 'w') as output_file:
+                output_file.write(json.dumps({
+                    "type": "FeatureCollection",
+                    "features": all_polygons
+                }, indent=2))
+            processing.run("native:fixgeometries",
+                           {'INPUT': output_polygons_layer_path,
+                            'METHOD': 1, 'OUTPUT': fixed_polygon_layer_path})
+            processing.run("native:dissolve", {'INPUT': QgsProcessingFeatureSourceDefinition(
+                fixed_polygon_layer_path,
+                selectedFeaturesOnly=False, featureLimit=-1,
+                flags=QgsProcessingFeatureSourceDefinition.FlagOverrideDefaultGeometryCheck,
+                geometryCheck=QgsFeatureRequest.GeometrySkipInvalid), 'FIELD': [], 'SEPARATE_DISJOINT': True,
+                'OUTPUT': diss_polygon_layer_path})

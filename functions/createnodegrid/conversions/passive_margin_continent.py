@@ -23,11 +23,6 @@ class PMCConversion:
     def __init__(self):
         pass
     def passive_margin_continent_to_nodes(self,age):
-        continent_polygons_layer_path = os.path.join(self.output_folder_path,
-                                                     f"continent_polygons_age_{int(age)}.geojson")
-        continent_polygons_layer = QgsVectorLayer(continent_polygons_layer_path, "Aggregated Continents", "ogr")
-        CRA_agg_polygon_path = os.path.join(self.output_folder_path, f"CRA_aggreg_polyg_{int(age)}.geojson")
-        CRA_polygon_layer = QgsVectorLayer(CRA_agg_polygon_path, "CRA Polygons", "ogr")
         raster_prelim_path = os.path.join(self.output_folder_path, f"qgis_tin_raster_prelim_{int(age)}.tif")
         raster_prelim = QgsRasterLayer(raster_prelim_path, "Preliminary Raster")
         pmc_multipoint_path = os.path.join(self.output_folder_path, f"pmc_multipoint_{int(age)}.geojson")
@@ -90,31 +85,28 @@ class PMCConversion:
                     feature = QgsFeature()
                     profile_geometry = feature_conversion_tools.create_profile(point1,point2,x_min,x_max,step_length, flag, "inverse")
                     if profile_geometry:
-                        if feature_conversion_tools.cut_entire_profile(profile_geometry, CRA_polygon_layer):
-                            pass
-                        else:
-                            cont_included_profile_geometry = feature_conversion_tools.cut_profile_spi(profile_geometry,
-                                                                                                      self.continent_polygons_layer,
-                                                                                                      "keep inside",
-                                                                                                      "positive", age,
-                                                                                                      False)
-                            if cont_included_profile_geometry:
-                                final_profile_geometry = feature_conversion_tools.check_profile_intersection(cont_included_profile_geometry,
-                                                                                                             spatial_index_profiles,
-                                                                                                             geometry_dict_profiles)
+                        cont_included_profile_geometry = feature_conversion_tools.cut_profile_spi(profile_geometry,
+                                                                                                  self.continent_polygons_layer,
+                                                                                                  "keep inside",
+                                                                                                  "positive", age,
+                                                                                                  False)
+                        if cont_included_profile_geometry:
+                            final_profile_geometry = feature_conversion_tools.check_profile_intersection(cont_included_profile_geometry,
+                                                                                                         spatial_index_profiles,
+                                                                                                         geometry_dict_profiles)
 
-                                if final_profile_geometry:
-                                    feature.setGeometry(final_profile_geometry)
-                                    feature.setAttributes(passive_margin_feature.attributes())
-                                    profile_points = final_profile_geometry.asMultiPoint()
-                                    for point in profile_points:
-                                        point_id = len(geometry_dict_profiles)
-                                        point_geom = QgsGeometry.fromPointXY(point)
-                                        geometry_dict_profiles[point_id] = point_geom
-                                        p_feature = QgsFeature(point_id)
-                                        p_feature.setGeometry(point_geom)
-                                        spatial_index_profiles.insertFeature(p_feature)
-                                    profiles_provider.addFeature(feature)
+                            if final_profile_geometry:
+                                feature.setGeometry(final_profile_geometry)
+                                feature.setAttributes(passive_margin_feature.attributes())
+                                profile_points = final_profile_geometry.asMultiPoint()
+                                for point in profile_points:
+                                    point_id = len(geometry_dict_profiles)
+                                    point_geom = QgsGeometry.fromPointXY(point)
+                                    geometry_dict_profiles[point_id] = point_geom
+                                    p_feature = QgsFeature(point_id)
+                                    p_feature.setGeometry(point_geom)
+                                    spatial_index_profiles.insertFeature(p_feature)
+                                profiles_provider.addFeature(feature)
                 PMC_profiles.commitChanges()
         output_profiles_layer_path = os.path.join(self.output_folder_path, f"PMC_profiles_{int(age)}.geojson")
         QgsVectorFileWriter.writeAsVectorFormat(PMC_profiles,output_profiles_layer_path,'utf-8',PMC_profiles.crs(),"GeoJSON")

@@ -174,16 +174,16 @@ class CreateNodeGridDialog(QtWidgets.QDialog, FORM_CLASS):
         QgsMessageLog.logMessage(f"Starting processing for age {age}", "Processing", Qgis.Info)
 
         # Run initial processing functions
-        lines_selections.select_lines(age=age)
-        self.update_progress_bar()
+        """lines_selections.select_lines(age=age)
+        self.update_progress_bar()"""
         rid_conversion.ridge_to_nodes(age=age)
         self.update_progress_bar()
         iso_conversion.isochron_to_nodes(age=age)
         self.update_progress_bar()
-        raster_tools.generate_temporary_raster(age=age)
+        raster_tools.generate_temporary_raster_plate_by_plate(age=age)
         self.update_progress_bar()
 
-        functions = [
+        """functions = [
             lws_conversion.lower_subduction_to_nodes,
             aba_conversion.abandoned_arc_to_nodes,
             pmw_conversion.passive_margin_wedge_to_nodes,
@@ -197,7 +197,7 @@ class CreateNodeGridDialog(QtWidgets.QDialog, FORM_CLASS):
             hot_spot_conversion.hot_spot_to_nodes
         ]
 
-        self.start_threads(age, functions)
+        self.start_threads(age, functions)"""
 
     def update_progress_bar(self):
         """

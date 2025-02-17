@@ -32,11 +32,12 @@ class RIDConversion:
             geom = feature.geometry()
             feature_age = feature.attribute('FEAT_AGE')
             z = feature.attribute('Z')
+            plate = feature.attribute('PLATE')
             distance = 0
             coords_list = [QgsPointXY(pt) for part in geom.parts() for pt in part]
             for coord in coords_list:
                 coords = [coord[0], coord[1]]
-                geojson_point_feature = {"type": "Feature","properties": {"TYPE": "RID","FEAT_AGE": feature_age,"DIST": distance,"Z": z,"Z_WITH_SED": z},"geometry": {"type": "Point","coordinates": coords}}
+                geojson_point_feature = {"type": "Feature","properties": {"TYPE": "RID","FEAT_AGE": feature_age,"DIST": distance,"Z": z,"Z_WITH_SED": z, "PLATE": plate},"geometry": {"type": "Point","coordinates": coords}}
                 all_points_features.append(geojson_point_feature)
         output_points_layer_path = os.path.join(self.output_folder_path, f"RID_nodes_{int(age)}.geojson")
         with open(output_points_layer_path, 'w') as output_file:

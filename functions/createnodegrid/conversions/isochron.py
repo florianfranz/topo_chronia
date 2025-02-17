@@ -38,6 +38,7 @@ class ISOConversion:
             feature_age = feature.attribute('FEAT_AGE')
             z = feature.attribute('Z')
             abys_sed = feature.attribute('ABYS_SED')
+            plate = feature.attribute('PLATE')
             distance = 0
             coords_list = [QgsPointXY(pt) for part in geom.parts() for pt in part]
             for coord in coords_list:
@@ -50,7 +51,9 @@ class ISOConversion:
                           "FEAT_AGE": feature_age,
                           "DIST": distance,
                           "Z": z,
-                          "Z_WITH_SED" : z + abys_sed},
+                          "Z_WITH_SED" : z + abys_sed,
+                          "PLATE": plate
+                          },
                      "geometry":
                          {"type": "Point",
                           "coordinates": coords}
