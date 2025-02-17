@@ -20,6 +20,8 @@ feature_conversion_tools = FeatureConversionTools()
 
 class LWSConversion:
     INPUT_FILE_PATH = "input_files.txt"
+    plate_polygons_path = base_tools.get_layer_path("Plate Polygons")
+    plate_polygons_layer = QgsVectorLayer(plate_polygons_path, "Plate Polygons", 'ogr')
     continent_polygons_path = base_tools.get_layer_path("Continent Polygons")
     continent_polygons_layer = QgsVectorLayer(continent_polygons_path, "Continent Polygons", 'ogr')
     geodesic_grid_path = base_tools.get_layer_path("Geodesic Grid")
@@ -99,6 +101,7 @@ class LWSConversion:
         for profile_feature in LWS_profiles.getFeatures():
             feature_abs_age = profile_feature.attribute('AGE')
             feature_age = feature_abs_age - age
+            plate = profile_feature.attribute('PLATE')
             if not profile_feature.hasGeometry():
                 continue
             geom = profile_feature.geometry()
@@ -142,7 +145,8 @@ class LWSConversion:
                             "DIST": distance,
                             "Z": z,
                             "Z_WITH_SED": z_with_sed,
-                            "POSITION": position
+                            "POSITION": position,
+                            "PLATE": plate,
                         },
                         "geometry": {
                             "type": "Point",
@@ -157,6 +161,7 @@ class LWSConversion:
                 "type": "FeatureCollection",
                 "features": all_points_features
             }, indent=2))
+        feature_conversion_tools.check_point_plate_intersection(age, "LWS")
         feature_conversion_tools.add_id_nodes_setting(age, "LWS")
         feature_conversion_tools.add_layer_to_group(output_points_layer_path, f"{int(age)} Ma", "LWS")
 

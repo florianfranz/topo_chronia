@@ -115,6 +115,7 @@ class UPSConversion:
         QgsVectorFileWriter.writeAsVectorFormat(UPS_profiles,output_profiles_layer_path,'utf-8',UPS_profiles.crs(),"GeoJSON")
         all_points_features = []
         for profile_feature in UPS_profiles.getFeatures():
+            plate = profile_feature.attribute('PLATE')
             feature_abs_age = profile_feature.attribute('AGE')
             feature_age = feature_abs_age - age
             setting = profile_feature.attribute('TYPE')
@@ -168,7 +169,8 @@ class UPSConversion:
                                                 "SED_HEIGHT": 0,
                                                 "ABYS_SED": 0,
                                                 "RHO_S": 0,
-                                                "RAST_DEPTH": raster_depth
+                                                "RAST_DEPTH": raster_depth,
+                                                "PLATE": plate
                                             },
                                             "geometry": {
                                                 "type": "Point",
@@ -193,7 +195,8 @@ class UPSConversion:
                                                 "SED_HEIGHT": h_s,
                                                 "ABYS_SED": abys_sed,
                                                 "RHO_S": rho_sed,
-                                                "RAST_DEPTH": raster_depth
+                                                "RAST_DEPTH": raster_depth,
+                                                "PLATE": plate
                                             },
                                             "geometry": {
                                                 "type": "Point",
@@ -216,7 +219,8 @@ class UPSConversion:
                                             "SED_HEIGHT": 0,
                                             "ABYS_SED": 0,
                                             "RHO_S": 0,
-                                            "RAST_DEPTH": raster_depth
+                                            "RAST_DEPTH": raster_depth,
+                                            "PLATE": plate
                                         },
                                         "geometry": {
                                             "type": "Point",
@@ -254,6 +258,7 @@ class UPSConversion:
                                 UPS_nodes_layer.changeAttributeValue(feature.id(), field_idx_z,
                                                                     feature.attribute('RAST_DEPTH'))
         UPS_nodes_layer.commitChanges()
+        feature_conversion_tools.check_point_plate_intersection(age, "UPS")
         feature_conversion_tools.add_id_nodes_setting(age, "UPS")
         feature_conversion_tools.add_layer_to_group(output_points_layer_path, f"{int(age)} Ma", "UPS")
 

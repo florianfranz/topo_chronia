@@ -130,6 +130,7 @@ class ABAConversion:
         all_points_features = []
         for profile in ABA_pos_profiles.getFeatures():
             gauss_factor = profile.attribute('GAUSS_FAC')
+            plate = profile.attribute('PLATE')
             geom = profile.geometry()
             multi_point = geom.asMultiPoint()
             feature_abs_age = profile.attribute('AGE')
@@ -156,7 +157,8 @@ class ABAConversion:
                             "H_SED": -1,
                             "RHO_SED": -1,
                             "SIDE": "Positive",
-                            "Z_RAS" : raster_depth
+                            "Z_RAS" : raster_depth,
+                            "PLATE" : plate
                         },
                         "geometry": {
                             "type": "Point",
@@ -180,7 +182,8 @@ class ABAConversion:
                             "H_SED": h_s,
                             "RHO_SED": rho_sed,
                             "SIDE": "Positive",
-                            "Z_RAS" : raster_depth
+                            "Z_RAS" : raster_depth,
+                            "PLATE": plate
                         },
                         "geometry": {
                             "type": "Point",
@@ -191,6 +194,7 @@ class ABAConversion:
 
         for profile in ABA_neg_profiles.getFeatures():
             gauss_factor = profile.attribute('GAUSS_FAC')
+            plate = profile.attribute('PLATE')
             geom = profile.geometry()
             multi_point = geom.asMultiPoint()
             feature_abs_age = profile.attribute('AGE')
@@ -220,7 +224,8 @@ class ABAConversion:
                                 "H_SED": -1,
                                 "RHO_SED": -1,
                                 "SIDE": "Negative",
-                                "Z_RAS" : raster_depth
+                                "Z_RAS" : raster_depth,
+                                "PLATE": plate
                             },
                             "geometry": {
                                 "type": "Point",
@@ -244,7 +249,8 @@ class ABAConversion:
                                 "H_SED": h_s,
                                 "RHO_SED": rho_sed,
                                 "SIDE": "Negative",
-                                "Z_RAS" : raster_depth
+                                "Z_RAS" : raster_depth,
+                                "PLATE": plate,
                             },
                             "geometry": {
                                 "type": "Point",
@@ -258,5 +264,6 @@ class ABAConversion:
                 "type": "FeatureCollection",
                 "features": all_points_features
             }, indent=2))
+        feature_conversion_tools.check_point_plate_intersection(age, "ABA")
         feature_conversion_tools.add_id_nodes_setting(age, "ABA")
         feature_conversion_tools.add_layer_to_group(output_points_layer_path, f"{int(age)} Ma", "ABA")

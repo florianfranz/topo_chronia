@@ -145,6 +145,7 @@ class RIBConversion:
             crest_z = int_profile.attribute("Z_CREST")
             through_y = int_profile.attribute("TYR")
             feature_age = int_profile.attribute("FEAT_AGE")
+            plate = int_profile.attribute("PLATE")
             geom = int_profile.geometry()
             multi_point = geom.asMultiPoint()
             feat_start_point = multi_point[0]
@@ -168,7 +169,8 @@ class RIBConversion:
                         "Z": z,
                         "Z_WITH_SED": z,
                         "CREST_Z": crest_z,
-                        "SIDE": side
+                        "SIDE": side,
+                        "PLATE": plate
                     },
                     "geometry": {
                         "type": "Point",
@@ -180,6 +182,7 @@ class RIBConversion:
             crest_z = ext_profile.attribute("Z_CREST")
             through_y = ext_profile.attribute("TYR")
             feature_age = ext_profile.attribute("FEAT_AGE")
+            plate = ext_profile.attribute("PLATE")
             geom = ext_profile.geometry()
             multi_point = geom.asMultiPoint()
             feat_start_point = multi_point[0]
@@ -203,7 +206,8 @@ class RIBConversion:
                             "Z": z,
                             "Z_WITH_SED": z,
                             "CREST_Z": crest_z,
-                            "SIDE": "External"
+                            "SIDE": "External",
+                            "PLATE": plate
                         },
                         "geometry": {
                             "type": "Point",
@@ -217,5 +221,6 @@ class RIBConversion:
                 "type": "FeatureCollection",
                 "features": all_points_features
             }, indent=2))
+        feature_conversion_tools.check_point_plate_intersection(age, "RIB")
         feature_conversion_tools.add_id_nodes_setting(age, "RIB")
         feature_conversion_tools.add_layer_to_group(output_points_layer_path, f"{int(age)} Ma", "RIB")

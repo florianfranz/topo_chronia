@@ -107,6 +107,7 @@ class PMWConversion:
         continent_y = 240.38
         for profile_feature in PMW_profiles.getFeatures():
             feature_abs_age = profile_feature.attribute('AGE')
+            plate = profile_feature.attribute('PLATE')
             feature_age = feature_abs_age - age
             geom = profile_feature.geometry()
             multi_point = geom.asMultiPoint()
@@ -140,7 +141,8 @@ class PMWConversion:
                         "Z": raster_depth,
                         "Z_WITH_SED": z_with_sed,
                         "H_SED": h_sed,
-                        "RHO_SED": rho_sed
+                        "RHO_SED": rho_sed,
+                        "PLATE": plate
                     },
                     "geometry": {
                         "type": "Point",
@@ -154,5 +156,6 @@ class PMWConversion:
                 "type": "FeatureCollection",
                 "features": all_points_features
             }, indent=2))
+        feature_conversion_tools.check_point_plate_intersection(age, "PMW")
         feature_conversion_tools.add_id_nodes_setting(age, "PMW")
         feature_conversion_tools.add_layer_to_group(output_points_layer_path, f"{int(age)} Ma", "PMW")

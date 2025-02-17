@@ -25,6 +25,8 @@ base_tools = BaseTools()
 
 class FeatureConversionTools:
     INPUT_FILE_PATH = "input_files.txt"
+    plate_polygons_path = base_tools.get_layer_path("Plate Polygons")
+    plate_polygons_layer = QgsVectorLayer(plate_polygons_path, "Plate Polygons", 'ogr')
     output_folder_path = base_tools.get_layer_path("Output Folder")
     APPEARANCE = "APPEARANCE"
     def __init__(self):
@@ -726,3 +728,55 @@ class FeatureConversionTools:
         layer = QgsVectorLayer(layer_path, f"{setting}", "ogr")
         QgsProject.instance().addMapLayer(layer, False)
         group.addLayer(layer)
+
+    def check_point_plate_intersection(self, age, setting):
+        nodes_layer_path = os.path.join(self.output_folder_path, f"{setting}_nodes_{int(age)}.geojson")
+        nodes_layer = QgsVectorLayer(nodes_layer_path, f"{setting} Nodes", "ogr")
+        polygon_index = QgsSpatialIndex(self.plate_polygons_layer)
+        nodes_to_delete = []
+        for node in nodes_layer.getFeatures():
+            node_geom = node.geometry()
+            candidate_ids = polygon_index.intersects(node_geom.boundingBox())
+            node_plate = node.attribute("PLATE")
+            plate_names_ors = {self.plate_polygons_layer.getFeature(poly_id).attribute("PLATE") for poly_id in candidate_ids}
+            plate_name_mappings = {
+                "Nazca": "NAZ",
+                "Tong_Ker": "TONGA_KER",
+                "Fiji_N": "FIDJI_N",
+                "Fiji_E": "FIDJI_E",
+                "Fiji_W": "FIDJI_W",
+                "Carolina": "CAROLINE",
+                "India": "IND",
+                "Easter": "EAST"
+            }
+
+            plate_names = {plate_name_mappings.get(plate_name_or, plate_name_or.upper()) for plate_name_or in
+                           plate_names_ors}
+
+            if node_plate in plate_names:
+                matching_geometries = [
+                    self.plate_polygons_layer.getFeature(poly_id).geometry()
+                    for poly_id in candidate_ids
+                    if plate_name_mappings.get(self.plate_polygons_layer.getFeature(poly_id).attribute("PLATE"),
+                                               self.plate_polygons_layer.getFeature(poly_id).attribute(
+                                                   "PLATE").upper()) == node_plate
+                ]
+
+                if matching_geometries:
+                    merged_geometry = matching_geometries[0]
+                    for geom in matching_geometries[1:]:
+                        merged_geometry = merged_geometry.combine(geom)
+                    if not node_geom.intersects(merged_geometry):
+                        nodes_to_delete.append(node.id())
+
+        QgsMessageLog.logMessage(f"{setting}: Deleted {len(nodes_to_delete)} nodes that were not intersecting their original plate", "Create Node Grid", Qgis.Info)
+        with edit(nodes_layer):
+            nodes_layer.dataProvider().deleteFeatures(nodes_to_delete)
+        nodes_layer.commitChanges()
+
+
+
+
+
+
+

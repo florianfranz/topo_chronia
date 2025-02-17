@@ -82,6 +82,7 @@ class OTMConversion:
         all_points_features = []
         for profile_feature in OTM_profiles.getFeatures():
             feature_abs_age = profile_feature.attribute('AGE')
+            plate = profile_feature.attribute('PLATE')
             feature_age = feature_abs_age - age
             geom = profile_feature.geometry()
             multi_point = geom.asMultiPoint()
@@ -112,7 +113,8 @@ class OTMConversion:
                             "DIST": distance,
                             "Z": 0,
                             "Z_WITH_SED": 0,
-                            "SIDE": "CONTINENT"
+                            "SIDE": "CONTINENT",
+                            "PLATE": plate
                         },
                         "geometry": {
                             "type": "Point",
@@ -128,7 +130,8 @@ class OTMConversion:
                             "DIST": distance,
                             "Z": raster_depth,
                             "Z_WITH_SED": z_with_sed,
-                            "SIDE": "OCEAN"
+                            "SIDE": "OCEAN",
+                            "PLATE": plate
                         },
                         "geometry": {
                             "type": "Point",
@@ -152,7 +155,8 @@ class OTMConversion:
                             "DIST": distance,
                             "Z": raster_depth,
                             "Z_WITH_SED": z_with_sed,
-                            "SIDE": "OCEAN"
+                            "SIDE": "OCEAN",
+                            "PLATE": plate
                         },
                         "geometry": {
                             "type": "Point",
@@ -168,7 +172,8 @@ class OTMConversion:
                             "DIST": distance,
                             "Z": 0,
                             "Z_WITH_SED": 0,
-                            "SIDE": "CONTINENT"
+                            "SIDE": "CONTINENT",
+                            "PLATE": plate
                         },
                         "geometry": {
                             "type": "Point",
@@ -182,5 +187,6 @@ class OTMConversion:
                 "type": "FeatureCollection",
                 "features": all_points_features
             }, indent=2))
+        feature_conversion_tools.check_point_plate_intersection(age, "OTM")
         feature_conversion_tools.add_id_nodes_setting(age, "OTM")
         feature_conversion_tools.add_layer_to_group(output_points_layer_path, f"{int(age)} Ma", "OTM")

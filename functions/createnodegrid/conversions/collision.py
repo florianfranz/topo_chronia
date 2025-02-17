@@ -136,6 +136,7 @@ class COLConversion:
         QgsVectorFileWriter.writeAsVectorFormat(COL_ext_profiles,output_ext_profiles_layer_path,'utf-8',COL_ext_profiles.crs(),"GeoJSON")
         all_points_features = []
         for profile_feature in COL_int_profiles.getFeatures():
+            plate = profile_feature.attribute('PLATE')
             geom = profile_feature.geometry()
             multi_point = geom.asMultiPoint()
             feat_start_point = multi_point[-1]
@@ -154,7 +155,8 @@ class COLConversion:
                         "Z": z,
                         "Z_WITH_SED": z,
                         "SIDE": "Internal",
-                        "SHIFT": shift
+                        "SHIFT": shift,
+                        "PLATE": plate
                     },
                     "geometry": {
                         "type": "Point",
@@ -163,6 +165,7 @@ class COLConversion:
                 }
                 all_points_features.append(geojson_point_feature)
         for profile_feature in COL_ext_profiles.getFeatures():
+            plate = profile_feature.attribute('PLATE')
             geom = profile_feature.geometry()
             multi_point = geom.asMultiPoint()
             feat_start_point = multi_point[0]
@@ -184,7 +187,8 @@ class COLConversion:
                             "Z": z,
                             "Z_WITH_SED": z,
                             "SIDE": "External",
-                            "SHIFT": shift
+                            "SHIFT": shift,
+                            "PLATE": plate
                         },
                         "geometry": {
                             "type": "Point",
@@ -198,5 +202,6 @@ class COLConversion:
                 "type": "FeatureCollection",
                 "features": all_points_features
             }, indent=2))
+        feature_conversion_tools.check_point_plate_intersection(age, "COL")
         feature_conversion_tools.add_id_nodes_setting(age, "COL")
         feature_conversion_tools.add_layer_to_group(output_points_layer_path, f"{int(age)} Ma", "COL")

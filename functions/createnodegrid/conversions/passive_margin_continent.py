@@ -114,6 +114,7 @@ class PMCConversion:
         for profile in PMC_profiles.getFeatures():
             x_crest = float(profile.attribute("X_CREST"))
             z_crest = float(profile.attribute("Z_CREST"))
+            plate = profile.attribute('PLATE')
             feature_age = profile.attribute("FEAT_AGE")
             x_wedge = pm_tools.wedge_x_pm_new(feature_age)
             y_wedge = pm_tools.wedge_y_pm_new(feature_age)
@@ -137,7 +138,8 @@ class PMCConversion:
                             "FEAT_AGE": feature_age,
                             "DIST": distance,
                             "Z": z,
-                            "Z_WITH_SED": z
+                            "Z_WITH_SED": z,
+                            "PLATE": plate
                         },
                         "geometry": {
                             "type": "Point",
@@ -151,5 +153,6 @@ class PMCConversion:
                 "type": "FeatureCollection",
                 "features": all_points_features
             }, indent=2))
+        feature_conversion_tools.check_point_plate_intersection(age, "PMC")
         feature_conversion_tools.add_id_nodes_setting(age, "PMC")
         feature_conversion_tools.add_layer_to_group(output_points_layer_path, f"{int(age)} Ma", "PMC")
