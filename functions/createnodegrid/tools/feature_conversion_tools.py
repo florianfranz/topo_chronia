@@ -1,8 +1,5 @@
 import os
-import sys
-import pandas as pd
 import math
-import subprocess
 import processing
 import json
 from qgis.core import (Qgis, edit, QgsPoint, QgsMessageLog, QgsFeatureRequest, QgsMultiPoint, QgsGeometry, QgsPointXY,
@@ -23,6 +20,9 @@ except Exception:
 from ...base_tools import BaseTools
 base_tools = BaseTools()
 
+from .velocity_data import velocity_dict
+
+
 class FeatureConversionTools:
     INPUT_FILE_PATH = "input_files.txt"
     plate_polygons_path = base_tools.get_layer_path("Plate Polygons")
@@ -32,18 +32,17 @@ class FeatureConversionTools:
     def __init__(self):
         pass
 
+
     def get_ridge_depth(self,age):
         """
-        Calculates ridge depth based on values from the accretion rates table.
+        Calculates ridge depth based on values from the velocity dictionary.
         """
-        accretion_rates_path = base_tools.get_layer_path("Accretion Rates")
-        accretion_rates_path = accretion_rates_path.split(".xlsx")[0] + ".xlsx"
-        df = pd.read_excel(accretion_rates_path,
-                           sheet_name='Accretion Rates')
-        result = df.loc[df['AGE'] == age, 'VELOCITY']
+        velocity = velocity_dict.get(str(int(age)))
 
-        velocity = result.iloc[0]
-        ridge_depth = -2835 # default value is -2870 but old nodes show -2835
+        if velocity is None:
+            raise ValueError(f"Velocity data not found for age: {age}")
+
+        ridge_depth = -2835  # default value is -2870 but old nodes show -2835
         ridge_depth = -3.541697688 * (velocity - 27.4810932747379) + ridge_depth
 
         return ridge_depth
