@@ -680,7 +680,12 @@ class FeatureConversionTools:
                 feature_age = new_node_feature.attribute('FEAT_AGE')
                 distance = new_node_feature.attribute('DIST')
                 z = new_node_feature.attribute('Z_WITH_SED')
-                plate = new_node_feature.attribute('PLATE')
+                if 'PLATE' in new_node_feature.fields().names():
+                    plate = new_node_feature.attribute('PLATE')
+                    if plate is None:
+                        plate = "UNDEFINED"
+                else:
+                    plate = "UNDEFINED"
                 if isinstance(z, QVariant):
                     pass
                 elif not isinstance(z, float):

@@ -66,7 +66,7 @@ class RasterTools:
         final_filled_raster_path = os.path.join(output_folder_path, f"raster_final_filled_{int(age)}.tif")
 
         processing.run("qgis:tininterpolation", {
-            'INTERPOLATION_DATA': f'{reproj_nodes_layer.source()}::~::0::~::5::~::0',
+            'INTERPOLATION_DATA': f'{reproj_nodes_layer.source()}::~::0::~::6::~::0',
             'METHOD': 0,
             'EXTENT': '-20037505.459500000,20037505.424600001,-6360516.244100000,6363880.960000000 [ESRI:54034]',
             'PIXEL_SIZE': 10000, 'OUTPUT': final_raster_path})

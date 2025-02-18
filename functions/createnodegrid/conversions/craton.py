@@ -22,7 +22,7 @@ class CRAConversion:
     def craton_to_nodes(self, age):
         crat_z_value = 500
         cont_z_value = 240.38
-        craton_polygons_path = os.path.join(self.output_folder_path, f"CRA_aggreg_polyg_{int(age)}.geojson")
+        craton_polygons_path = os.path.join(self.output_folder_path, f"CRA_polygons_{int(age)}_final.geojson")
         CRA_polygons = QgsVectorLayer(craton_polygons_path,f"CRA aggreg polygons {int(age)}","ogr")
         continent_filter = f"{self.APPEARANCE} = {age}"
         continent_spatial_index = QgsSpatialIndex(
