@@ -28,7 +28,7 @@ class SeaLevel:
         Calculates the volume under a given z value.
         """
         if count == 0:
-            dem_path = os.path.join(self.output_folder_path, f"raster_{int(age)}_filled.tif")
+            dem_path = os.path.join(self.output_folder_path, f"qgis_tin_raster_{int(age)}.tif")
         else:
             dem_path = os.path.join(self.output_folder_path, f"raster_final_filled_{int(age)}.tif")
 
