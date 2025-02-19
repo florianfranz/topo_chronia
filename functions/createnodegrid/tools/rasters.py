@@ -31,7 +31,6 @@ class PreRasterTools:
         attributes = nodes_layer.fields().toList()
 
         plate_filter = f"{self.APPEARANCE} = {age}"
-        plate_features = list(self.plate_polygons_layer.getFeatures(QgsFeatureRequest().setFilterExpression(plate_filter)))
         for plate in self.plate_polygons_layer.getFeatures(QgsFeatureRequest().setFilterExpression(plate_filter)):
             plate_name_or = plate.attribute("PLATE")
 
@@ -103,7 +102,7 @@ class PreRasterTools:
             return
 
         # Create the mosaic output path
-        mosaic_output_path = os.path.join(output_folder, "mosaic_output.tif")
+        mosaic_output_path = os.path.join(output_folder, "mosaic_output_prelim.tif")
 
         # Run the "gdal:merge" algorithm to merge all the rasters
         processing.run("gdal:merge", {

@@ -67,7 +67,7 @@ class InterpolateRasterDialog(QtWidgets.QDialog, FORM_CLASS):
         age_values = [float(item.text().split()[0]) for item in selected_items]
 
         for age in age_values:
-            raster_tools.perform_raster_interpolation_wcea(age)
+            raster_tools.generate_raster_plate_by_plate(age)
 
     def correct_water_load(self):
         """
