@@ -44,8 +44,10 @@ class ABAConversion:
         points_provider.addAttributes([QgsField('LAT_DIST', QVariant.Double),QgsField('GAUSS_FAC', QVariant.Double)])
         ABA_multipoints.updateFields()
         ABA_multipoints.commitChanges()
-        spatial_index_profiles = QgsSpatialIndex()
-        geometry_dict_profiles = {}
+        spatial_index_pos_profiles = QgsSpatialIndex()
+        geometry_dict_pos_profiles = {}
+        spatial_index_neg_profiles = QgsSpatialIndex()
+        geometry_dict_neg_profiles = {}
         for feature in dens_ABA_layer.getFeatures():
             geom = feature.geometry()
             coords_list = [QgsPointXY(pt) for part in geom.parts() for pt in part]
@@ -92,34 +94,34 @@ class ABAConversion:
                     feature = QgsFeature()
                     negative_profile_geometry = feature_conversion_tools.create_profile(point1,point2,x_min,x_max_neg,step_length, flag, "inverse")
                     if negative_profile_geometry:
-                        final_neg_profile_geometry = feature_conversion_tools.check_profile_intersection(negative_profile_geometry, spatial_index_profiles, geometry_dict_profiles)
+                        final_neg_profile_geometry = feature_conversion_tools.check_profile_intersection(negative_profile_geometry, spatial_index_neg_profiles, geometry_dict_neg_profiles)
                         if final_neg_profile_geometry:
                             feature.setGeometry(final_neg_profile_geometry)
                             feature.setAttributes(updated_feature.attributes())
                             profile_points = final_neg_profile_geometry.asMultiPoint()
                             for point in profile_points:
-                                point_id = len(geometry_dict_profiles)
+                                point_id = len(geometry_dict_neg_profiles)
                                 point_geom = QgsGeometry.fromPointXY(point)
-                                geometry_dict_profiles[point_id] = point_geom
+                                geometry_dict_neg_profiles[point_id] = point_geom
                                 p_feature = QgsFeature(point_id)
                                 p_feature.setGeometry(point_geom)
-                                spatial_index_profiles.insertFeature(p_feature)
+                                spatial_index_neg_profiles.insertFeature(p_feature)
                             neg_profiles_provider.addFeature(feature)
                     feature = QgsFeature()
                     positive_profile_geometry = feature_conversion_tools.create_profile(point1,point2,x_min,x_max_pos,step_length,flag, "normal")
                     if positive_profile_geometry:
-                        final_pos_profile_geometry = feature_conversion_tools.check_profile_intersection(positive_profile_geometry, spatial_index_profiles,geometry_dict_profiles)
+                        final_pos_profile_geometry = feature_conversion_tools.check_profile_intersection(positive_profile_geometry, spatial_index_pos_profiles,geometry_dict_pos_profiles)
                         if final_pos_profile_geometry:
                             feature.setGeometry(final_pos_profile_geometry)
                             feature.setAttributes(updated_feature.attributes())
                             profile_points = final_pos_profile_geometry.asMultiPoint()
                             for point in profile_points:
-                                point_id = len(geometry_dict_profiles)
+                                point_id = len(geometry_dict_pos_profiles)
                                 point_geom = QgsGeometry.fromPointXY(point)
-                                geometry_dict_profiles[point_id] = point_geom
+                                geometry_dict_pos_profiles[point_id] = point_geom
                                 p_feature = QgsFeature(point_id)
                                 p_feature.setGeometry(point_geom)
-                                spatial_index_profiles.insertFeature(p_feature)
+                                spatial_index_pos_profiles.insertFeature(p_feature)
                             pos_profiles_provider.addFeature(feature)
         ABA_neg_profiles.commitChanges()
         ABA_pos_profiles.commitChanges()

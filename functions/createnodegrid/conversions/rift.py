@@ -43,7 +43,10 @@ class RIBConversion:
         continent_feature = next(agg_continent_polygon_layer.getFeatures())
         continent_geometry = continent_feature.geometry()
         spatial_index_int_profiles = QgsSpatialIndex()
+        spatial_index_ext_profiles = QgsSpatialIndex()
         geometry_dict_int_profiles = {}
+        geometry_dict_ext_profiles = {}
+
         spatial_index_polygons = QgsSpatialIndex()
         for polygon in basins_polygon_layer.getFeatures():
             spatial_index_polygons.insertFeature(polygon)
@@ -117,19 +120,19 @@ class RIBConversion:
                             cont_excluded_profile_geometry = feature_conversion_tools.cut_profile_spi(bas_excluded_profile_geometry, self.continent_polygons_layer, "keep inside", "positive", age, False)
                             if cont_excluded_profile_geometry:
                                 final_ext_profile_geometry = feature_conversion_tools.check_profile_intersection(
-                                    cont_excluded_profile_geometry, spatial_index_int_profiles,
-                                    geometry_dict_int_profiles)
+                                    cont_excluded_profile_geometry, spatial_index_ext_profiles,
+                                    geometry_dict_ext_profiles)
                                 if final_ext_profile_geometry:
                                     feature.setGeometry(final_ext_profile_geometry)
                                     feature.setAttributes(rift_feature.attributes())
                                     profile_points = final_ext_profile_geometry.asMultiPoint()
                                     for point in profile_points:
-                                        point_id = len(geometry_dict_int_profiles)
+                                        point_id = len(geometry_dict_ext_profiles)
                                         point_geom = QgsGeometry.fromPointXY(point)
-                                        geometry_dict_int_profiles[point_id] = point_geom
+                                        geometry_dict_ext_profiles[point_id] = point_geom
                                         p_feature = QgsFeature(point_id)
                                         p_feature.setGeometry(point_geom)
-                                        spatial_index_int_profiles.insertFeature(p_feature)
+                                        spatial_index_ext_profiles.insertFeature(p_feature)
                                     external_profiles_provider.addFeature(feature)
         RIB_internal_profiles.commitChanges()
         output_profiles_layer_path = os.path.join(self.output_folder_path, f"RIB_internal_profiles_{int(age)}.geojson")

@@ -38,7 +38,10 @@ class COLConversion:
         COL_multipoints.updateFields()
         COL_multipoints.commitChanges()
         spatial_index_int_profiles = QgsSpatialIndex()
+        spatial_index_ext_profiles = QgsSpatialIndex()
         geometry_dict_int_profiles = {}
+        geometry_dict_ext_profiles = {}
+
         for feature in dens_COL_lines.getFeatures():
             feature_abs_age = feature.attribute('AGE')
             if feature_abs_age != 9999:
@@ -115,18 +118,18 @@ class COLConversion:
                                                                                               "positive", age,
                                                                                               False)
                     if cont_included_profile_geometry:
-                        final_ext_profile_geometry = feature_conversion_tools.check_profile_intersection(cont_included_profile_geometry, spatial_index_int_profiles, geometry_dict_int_profiles)
+                        final_ext_profile_geometry = feature_conversion_tools.check_profile_intersection(cont_included_profile_geometry, spatial_index_ext_profiles, geometry_dict_ext_profiles)
                         if final_ext_profile_geometry:
                             feature.setGeometry(final_ext_profile_geometry)
                             feature.setAttributes(collision_feature.attributes())
                             profile_points = final_ext_profile_geometry.asMultiPoint()
                             for point in profile_points:
-                                point_id = len(geometry_dict_int_profiles)
+                                point_id = len(geometry_dict_ext_profiles)
                                 point_geom = QgsGeometry.fromPointXY(point)
-                                geometry_dict_int_profiles[point_id] = point_geom
+                                geometry_dict_ext_profiles[point_id] = point_geom
                                 p_feature = QgsFeature(point_id)
                                 p_feature.setGeometry(point_geom)
-                                spatial_index_int_profiles.insertFeature(p_feature)
+                                spatial_index_ext_profiles.insertFeature(p_feature)
                             ext_profiles_provider.addFeature(feature)
         COL_int_profiles.commitChanges()
         COL_ext_profiles.commitChanges()
