@@ -30,6 +30,7 @@ class CRAConversion:
         all_points_features = []
         for polygon in CRA_polygons.getFeatures():
             polygon_geom = polygon.geometry().asPolygon()
+            plate = polygon.attribute('PLATE')
             for vertices in polygon_geom:
                 for vertex in vertices:
                     x_coord = vertex.x()
@@ -55,7 +56,8 @@ class CRAConversion:
                                 "DIST": 0,
                                 "Z": crat_z_value,
                                 "Z_WITH_SED": crat_z_value,
-                                "SIDE": "Border"
+                                "SIDE": "Border",
+                                "PLATE": plate
                             },
                             "geometry": {
                                 "type": "Point",
@@ -65,6 +67,7 @@ class CRAConversion:
                         all_points_features.append(geojson_feature)
         for polygon in CRA_polygons.getFeatures():
             polygon_geom = polygon.geometry()
+            plate = polygon.attribute('PLATE')
             int_buffered_polygon = polygon_geom.buffer(-0.1, 1)
             for point in self.geodesic_grid_layer.getFeatures():
                 geom = point.geometry()
@@ -93,7 +96,8 @@ class CRAConversion:
                                 "DIST": 8888,
                                 "Z": crat_z_value,
                                 "Z_WITH_SED": crat_z_value,
-                                "SIDE": "Internal"
+                                "SIDE": "Internal",
+                                "PLATE": plate
                             },
                             "geometry": {
                                 "type": "Point",
@@ -103,6 +107,7 @@ class CRAConversion:
                         all_points_features.append(geojson_feature)
         for polygon in CRA_polygons.getFeatures():
             polygon_geom = polygon.geometry()
+            plate = polygon.attribute('PLATE')
             ext_buffered_polygon = polygon_geom.buffer(0.75, 1)
             if ext_buffered_polygon.isMultipart():
                 ext_buffered_polygon_geom = ext_buffered_polygon.asMultiPolygon()
@@ -132,7 +137,9 @@ class CRAConversion:
                                         "DIST": 0,
                                         "Z": cont_z_value,
                                         "Z_WITH_SED": cont_z_value,
-                                        "SIDE": "External"
+                                        "SIDE": "External",
+                                        "PLATE": plate
+
                                     },
                                     "geometry": {
                                         "type": "Point",
@@ -167,7 +174,8 @@ class CRAConversion:
                                     "DIST": 0,
                                     "Z": cont_z_value,
                                     "Z_WITH_SED": cont_z_value,
-                                    "SIDE": "External"
+                                    "SIDE": "External",
+                                    "PLATE": plate
                                 },
                                 "geometry": {
                                     "type": "Point",
