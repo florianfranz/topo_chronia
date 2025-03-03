@@ -107,7 +107,7 @@ class SeaLevel:
         output_file_path = os.path.join(self.output_folder_path, "water_load_correction_summary.txt")
         with open(output_file_path, 'a') as file:
             if file.tell() == 0:
-                file.write("age, initial_volume, initial_area, z_full_volume, area_full_volume dSL, subsidence\n")
+                file.write("age, initial_volume, initial_area, z_full_volume, area_full_volume, dSL, subsidence\n")
             file.write(f"{int(age)}, {initial_volume}, {initial_area}, {z_full_volume}, {area_full_volume}, {dSL}, {subsidence}\n")
 
 
