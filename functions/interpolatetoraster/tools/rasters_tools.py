@@ -50,39 +50,42 @@ class RasterTools:
         with edit(self.plate_polygons_layer):  # Start editing
             for feature in self.plate_polygons_layer.getFeatures():
                 geom = feature.geometry()
-
-                if geom.isMultipart():  # If it's a MultiPolygon
-                    new_coords = []
-                    for polygon in geom.asMultiPolygon():
-                        fixed_polygon = []
-                        for ring in polygon:
+                if geom.isNull():
+                    pass
+                else:
+                    if geom.isMultipart():  # If it's a MultiPolygon
+                        new_coords = []
+                        for polygon in geom.asMultiPolygon():
+                            fixed_polygon = []
+                            for ring in polygon:
+                                fixed_ring = [
+                                    QgsPointXY(
+                                        max(-180, min(180, point.x())),  # Clamp longitude
+                                        point.y()
+                                    ) for point in ring
+                                ]
+                                fixed_polygon.append(fixed_ring)
+                            new_coords.append(fixed_polygon)
+                        new_geom = QgsGeometry.fromMultiPolygonXY(new_coords)
+                    else:  # If it's a single Polygon
+                        new_coords = []
+                        for ring in geom.asPolygon():
                             fixed_ring = [
                                 QgsPointXY(
                                     max(-180, min(180, point.x())),  # Clamp longitude
                                     point.y()
                                 ) for point in ring
                             ]
-                            fixed_polygon.append(fixed_ring)
-                        new_coords.append(fixed_polygon)
-                    new_geom = QgsGeometry.fromMultiPolygonXY(new_coords)
-                else:  # If it's a single Polygon
-                    new_coords = []
-                    for ring in geom.asPolygon():
-                        fixed_ring = [
-                            QgsPointXY(
-                                max(-180, min(180, point.x())),  # Clamp longitude
-                                point.y()
-                            ) for point in ring
-                        ]
-                        new_coords.append(fixed_ring)
-                    new_geom = QgsGeometry.fromPolygonXY(new_coords)
+                            new_coords.append(fixed_ring)
+                        new_geom = QgsGeometry.fromPolygonXY(new_coords)
 
-                # Update the feature geometry
-                self.plate_polygons_layer.changeGeometry(feature.id(), new_geom)
+                    # Update the feature geometry
+                    self.plate_polygons_layer.changeGeometry(feature.id(), new_geom)
 
     def reproject_plate_polygons(self,age):
         self.fix_longitude()
         reproj_plates_path = os.path.join(self.output_folder_path, f"reproj_plate_polygons_{int(age)}.geojson")
+        fixed_reproj_plates_path = reproj_plates_path.replace('.geojson','fixed.geojson')
         processing.run("native:reprojectlayer", {'INPUT': QgsProcessingFeatureSourceDefinition(
             self.plate_polygons_path , selectedFeaturesOnly=False,
             featureLimit=-1, filterExpression=f' "APPEARANCE" = {age} ',
@@ -91,7 +94,12 @@ class RasterTools:
                                                  'CONVERT_CURVED_GEOMETRIES': False,
                                                  'OPERATION': '+proj=pipeline +step +proj=unitconvert +xy_in=deg +xy_out=rad +step +proj=cea +lat_ts=0 +lon_0=0 +x_0=0 +y_0=0 +ellps=WGS84',
                                                  'OUTPUT': reproj_plates_path})
-        return reproj_plates_path
+
+        processing.run("native:fixgeometries", {
+            'INPUT': reproj_plates_path,
+            'METHOD': 1, #Keep Structure rather than line work.
+            'OUTPUT': fixed_reproj_plates_path})
+        return fixed_reproj_plates_path
 
     def generate_raster_plate_by_plate(self, age):
         """
