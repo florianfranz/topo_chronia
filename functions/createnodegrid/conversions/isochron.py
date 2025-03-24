@@ -36,29 +36,32 @@ class ISOConversion:
         for feature in dens_ISO_layer_features:
             geom = feature.geometry()
             feature_age = feature.attribute('FEAT_AGE')
-            z = feature.attribute('Z')
-            abys_sed = feature.attribute('ABYS_SED')
-            plate = feature.attribute('PLATE')
-            distance = 0
-            coords_list = [QgsPointXY(pt) for part in geom.parts() for pt in part]
-            for coord in coords_list:
-                coords = [coord[0], coord[1]]
-                geojson_point_feature = \
-                    {"type":
-                         "Feature",
-                     "properties":
-                         {"TYPE": "ISO",
-                          "FEAT_AGE": feature_age,
-                          "DIST": distance,
-                          "Z": z,
-                          "Z_WITH_SED" : z + abys_sed,
-                          "PLATE": plate
-                          },
-                     "geometry":
-                         {"type": "Point",
-                          "coordinates": coords}
-                     }
-                all_points_features.append(geojson_point_feature)
+            if feature_age < 0:
+                pass
+            else:
+                z = feature.attribute('Z')
+                abys_sed = feature.attribute('ABYS_SED')
+                plate = feature.attribute('PLATE')
+                distance = 0
+                coords_list = [QgsPointXY(pt) for part in geom.parts() for pt in part]
+                for coord in coords_list:
+                    coords = [coord[0], coord[1]]
+                    geojson_point_feature = \
+                        {"type":
+                             "Feature",
+                         "properties":
+                             {"TYPE": "ISO",
+                              "FEAT_AGE": feature_age,
+                              "DIST": distance,
+                              "Z": z,
+                              "Z_WITH_SED" : z + abys_sed,
+                              "PLATE": plate
+                              },
+                         "geometry":
+                             {"type": "Point",
+                              "coordinates": coords}
+                         }
+                    all_points_features.append(geojson_point_feature)
         output_points_layer_path = os.path.join(self.output_folder_path,f"ISO_nodes_{int(age)}.geojson")
         with open(output_points_layer_path, 'w') as output_file:
             output_file.write(json.dumps({"type": "FeatureCollection","features": all_points_features}, indent=2))

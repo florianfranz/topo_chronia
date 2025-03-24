@@ -45,12 +45,30 @@ class UPSConversion:
         profiles_provider.addAttributes(attributes)
         UPS_profiles.updateFields()
         field_idx_oid = ups_multipoint.fields().indexOf('ORIG_ID')
+        field_idx_rd = ups_multipoint.fields().indexOf('Z_RASTER')
         spatial_index_profiles = QgsSpatialIndex()
         geometry_dict_profiles = {}
         with edit(ups_multipoint):
             for upper_subduction_feature in ups_multipoint.getFeatures():
-                orig_id = upper_subduction_feature.id()
-                ups_multipoint.changeAttributeValue(upper_subduction_feature.id(),field_idx_oid,orig_id)
+                geom = upper_subduction_feature.geometry()
+                multi_point = geom.asMultiPoint()
+                if len(multi_point) < 3:
+                    pass
+                else:
+                    middle_index = len(multi_point) // 2
+                    middle_point = multi_point[middle_index]
+                    coords = QgsPointXY(middle_point)
+                    val, res = raster_prelim.dataProvider().sample(coords, 1)
+                    if math.isnan(val):
+                        raster_depth = 1.4109347442680775*ridge_depth
+                    else:
+                        raster_depth = float(val)
+                        if raster_depth < -5500:
+                            raster_depth = -5500
+                    orig_id = upper_subduction_feature.id()
+                    ups_multipoint.changeAttributeValue(upper_subduction_feature.id(),field_idx_oid,orig_id)
+                    ups_multipoint.changeAttributeValue(upper_subduction_feature.id(),field_idx_rd,raster_depth)
+
         ups_multipoint.commitChanges()
         for upper_subduction_feature in ups_multipoint.getFeatures():
             geom = upper_subduction_feature.geometry()
@@ -117,7 +135,13 @@ class UPSConversion:
         for profile_feature in UPS_profiles.getFeatures():
             plate = profile_feature.attribute('PLATE')
             feature_abs_age = profile_feature.attribute('AGE')
+            try:
+                raster_depth = float(profile_feature.attribute('Z_RASTER'))
+            except (TypeError, ValueError):
+                raster_depth = 1.4109347442680775*ridge_depth
             feature_age = feature_abs_age - age
+            if feature_age < 0:
+                feature_age = 0
             setting = profile_feature.attribute('TYPE')
             orig_id_profile = profile_feature.attribute('ORIG_ID')
             geom = profile_feature.geometry()
@@ -129,32 +153,86 @@ class UPSConversion:
                     if sub_multipoint_feature.attribute('ORIG_ID') == orig_id_profile:
                         sub_multipoint_base_geom = sub_multipoint_feature.geometry()
                         sub_multipoint_geom = sub_multipoint_base_geom.asMultiPoint()
-                        initial_sub_multipoint_vertex = sub_multipoint_geom[0]
-                        feat_start_point = multi_point[0]
-                        feat_end_point = multi_point[-1]
-                        lat_distance = feature_conversion_tools.prod_scal(initial_sub_multipoint_vertex,1,feat_start_point,1)
-                        coords = QgsPointXY(feat_end_point)
-                        val, res = raster_prelim.dataProvider().sample(coords, 1)
-                        if math.isnan(val):
-                            raster_depth = -4000
+                        if len(sub_multipoint_geom) <3:
+                            pass
                         else:
-                            raster_depth = float(val)
-                        for point in multi_point:
-                            distance = feature_conversion_tools.prod_scal(feat_start_point,1,point,1)
-                            if distance == 0:
-                                pass  # As we already have nodes at feature line position from the LWS, we skip it here.
-                            else:
-                                if setting == "Active_Margin":
-                                    z_up_plate = 240.38
+                            initial_sub_multipoint_vertex = sub_multipoint_geom[0]
+                            feat_start_point = multi_point[0]
+                            lat_distance = feature_conversion_tools.prod_scal(initial_sub_multipoint_vertex,1,feat_start_point,1)
+                            for point in multi_point:
+                                distance = feature_conversion_tools.prod_scal(feat_start_point,1,point,1)
+                                if distance == 0:
+                                    pass  # As we already have nodes at feature line position from the LWS, we skip it here.
                                 else:
-                                    z_up_plate = raster_depth
-                                coords = [point[0], point[1]]
+                                    if setting == "Active_Margin":
+                                        z_up_plate = 240.38
+                                        z = sub_tools.subduction_profile(setting, distance, ridge_depth, raster_depth,
+                                                                         z_up_plate, lat_distance)
 
-                                z = sub_tools.subduction_profile(setting,distance,ridge_depth,raster_depth,z_up_plate,lat_distance)
-                                PCM_age = feature_conversion_tools.inversePCM(raster_depth,ridge_depth)
-                                abys_sed = sed_tools.abyssal_sediments(age,age + PCM_age)
-                                if distance >= 2.5:
-                                    if raster_depth + abys_sed < z:
+                                    else:
+                                        z_up_plate = raster_depth
+                                        if point != multi_point[-1]:
+                                            z = sub_tools.subduction_profile(setting, distance, ridge_depth, raster_depth,
+                                                                             z_up_plate, lat_distance)
+                                        else:
+                                            z = raster_depth
+                                    coords = [point[0], point[1]]
+
+                                    PCM_age = feature_conversion_tools.inversePCM(raster_depth,ridge_depth)
+
+                                    abys_sed = sed_tools.abyssal_sediments(age,age + PCM_age)
+                                    if distance >= 2.5:
+                                        if raster_depth + abys_sed < z:
+                                            geojson_point_feature = {
+                                                "type": "Feature",
+                                                "properties": {
+                                                    "TYPE": "UPS",
+                                                    "FEAT_AGE": feature_age,
+                                                    "DIST": distance,
+                                                    "Z": z,
+                                                    "Z_WITH_SED": z,
+                                                    "Z_UP": z_up_plate,
+                                                    "LAT_DIST": lat_distance,
+                                                    "SETTING": setting,
+                                                    "SED_HEIGHT": 0,
+                                                    "ABYS_SED": 0,
+                                                    "RHO_S": 0,
+                                                    "RAST_DEPTH": raster_depth,
+                                                    "PLATE": plate
+                                                },
+                                                "geometry": {
+                                                    "type": "Point",
+                                                    "coordinates": coords
+                                                }
+                                            }
+                                            all_points_features.append(geojson_point_feature)
+                                        else:
+                                            h_s = sed_tools.full_sediment_thickness(abys_sed + raster_depth - z)
+                                            rho_sed = sed_tools.rho_sed(h_s)
+                                            geojson_point_feature = {
+                                                "type": "Feature",
+                                                "properties": {
+                                                    "TYPE": "UPS",
+                                                    "FEAT_AGE": feature_age,
+                                                    "DIST": distance,
+                                                    "Z": z,
+                                                    "Z_WITH_SED": raster_depth,
+                                                    "Z_UP": z_up_plate,
+                                                    "LAT_DIST": lat_distance,
+                                                    "SETTING": setting,
+                                                    "SED_HEIGHT": h_s,
+                                                    "ABYS_SED": abys_sed,
+                                                    "RHO_S": rho_sed,
+                                                    "RAST_DEPTH": raster_depth,
+                                                    "PLATE": plate
+                                                },
+                                                "geometry": {
+                                                    "type": "Point",
+                                                    "coordinates": coords
+                                                }
+                                            }
+                                            all_points_features.append(geojson_point_feature)
+                                    else:
                                         geojson_point_feature = {
                                             "type": "Feature",
                                             "properties": {
@@ -178,56 +256,6 @@ class UPSConversion:
                                             }
                                         }
                                         all_points_features.append(geojson_point_feature)
-                                    else:
-                                        h_s = sed_tools.full_sediment_thickness(abys_sed + raster_depth - z)
-                                        rho_sed = sed_tools.rho_sed(h_s)
-                                        geojson_point_feature = {
-                                            "type": "Feature",
-                                            "properties": {
-                                                "TYPE": "UPS",
-                                                "FEAT_AGE": feature_age,
-                                                "DIST": distance,
-                                                "Z": z,
-                                                "Z_WITH_SED": raster_depth,
-                                                "Z_UP": z_up_plate,
-                                                "LAT_DIST": lat_distance,
-                                                "SETTING": setting,
-                                                "SED_HEIGHT": h_s,
-                                                "ABYS_SED": abys_sed,
-                                                "RHO_S": rho_sed,
-                                                "RAST_DEPTH": raster_depth,
-                                                "PLATE": plate
-                                            },
-                                            "geometry": {
-                                                "type": "Point",
-                                                "coordinates": coords
-                                            }
-                                        }
-                                        all_points_features.append(geojson_point_feature)
-                                else:
-                                    geojson_point_feature = {
-                                        "type": "Feature",
-                                        "properties": {
-                                            "TYPE": "UPS",
-                                            "FEAT_AGE": feature_age,
-                                            "DIST": distance,
-                                            "Z": z,
-                                            "Z_WITH_SED": z,
-                                            "Z_UP": z_up_plate,
-                                            "LAT_DIST": lat_distance,
-                                            "SETTING": setting,
-                                            "SED_HEIGHT": 0,
-                                            "ABYS_SED": 0,
-                                            "RHO_S": 0,
-                                            "RAST_DEPTH": raster_depth,
-                                            "PLATE": plate
-                                        },
-                                        "geometry": {
-                                            "type": "Point",
-                                            "coordinates": coords
-                                        }
-                                    }
-                                    all_points_features.append(geojson_point_feature)
         output_points_layer_path = os.path.join(self.output_folder_path,f"UPS_nodes_{int(age)}.geojson")
         with open(output_points_layer_path, 'w') as output_file:
             output_file.write(json.dumps({
@@ -258,7 +286,7 @@ class UPSConversion:
                                 UPS_nodes_layer.changeAttributeValue(feature.id(), field_idx_z,
                                                                     feature.attribute('RAST_DEPTH'))
         UPS_nodes_layer.commitChanges()
-        feature_conversion_tools.check_point_plate_intersection(age, "UPS")
+        #feature_conversion_tools.check_point_plate_intersection(age, "UPS")
         feature_conversion_tools.add_id_nodes_setting(age, "UPS")
         feature_conversion_tools.add_layer_to_group(output_points_layer_path, f"{int(age)} Ma", "UPS")
 

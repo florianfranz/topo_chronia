@@ -76,61 +76,65 @@ class COLConversion:
             geom = collision_feature.geometry()
             multi_point = geom.asMultiPoint()
             shift = collision_feature.attribute('SHIFT')
-            x_max_int = -shift * 100
-            x_max_ext = (shift + profile_length) * 100
-            for i in range(len(multi_point)):
-                if i < len(multi_point) - 1:
-                    point1 = multi_point[i]
-                    point2 = multi_point[i + 1]
-                    flag = 0
-                else:
-                    point1 = multi_point[i]
-                    point2 = multi_point[i - 1]
-                    flag = 1
-                feature = QgsFeature()
-                internal_profile_geometry = feature_conversion_tools.create_profile(point1,point2,0,x_max_int,step_length,flag, "inverse")
-                if internal_profile_geometry:
-                    cont_included_profile_geometry = feature_conversion_tools.cut_profile_spi(internal_profile_geometry,
-                                                                                              self.continent_polygons_layer,
-                                                                                              "keep inside",
-                                                                                              "positive", age,
-                                                                                              False)
-                    if cont_included_profile_geometry:
-                        final_int_profile_geometry = feature_conversion_tools.check_profile_intersection(cont_included_profile_geometry,spatial_index_int_profiles, geometry_dict_int_profiles)
-                        if final_int_profile_geometry:
-                            feature.setGeometry(final_int_profile_geometry)
-                            feature.setAttributes(collision_feature.attributes())
-                            profile_points = final_int_profile_geometry.asMultiPoint()
-                            for point in profile_points:
-                                point_id = len(geometry_dict_int_profiles)
-                                point_geom = QgsGeometry.fromPointXY(point)
-                                geometry_dict_int_profiles[point_id] = point_geom
-                                p_feature = QgsFeature(point_id)
-                                p_feature.setGeometry(point_geom)
-                                spatial_index_int_profiles.insertFeature(p_feature)
-                            int_profiles_provider.addFeature(feature)
-                feature = QgsFeature()
-                external_profile_geometry = feature_conversion_tools.create_profile(point1,point2,0,x_max_ext,step_length,flag, "normal")
-                if external_profile_geometry:
-                    cont_included_profile_geometry = feature_conversion_tools.cut_profile_spi(external_profile_geometry,
-                                                                                              self.continent_polygons_layer,
-                                                                                              "keep inside",
-                                                                                              "positive", age,
-                                                                                              False)
-                    if cont_included_profile_geometry:
-                        final_ext_profile_geometry = feature_conversion_tools.check_profile_intersection(cont_included_profile_geometry, spatial_index_ext_profiles, geometry_dict_ext_profiles)
-                        if final_ext_profile_geometry:
-                            feature.setGeometry(final_ext_profile_geometry)
-                            feature.setAttributes(collision_feature.attributes())
-                            profile_points = final_ext_profile_geometry.asMultiPoint()
-                            for point in profile_points:
-                                point_id = len(geometry_dict_ext_profiles)
-                                point_geom = QgsGeometry.fromPointXY(point)
-                                geometry_dict_ext_profiles[point_id] = point_geom
-                                p_feature = QgsFeature(point_id)
-                                p_feature.setGeometry(point_geom)
-                                spatial_index_ext_profiles.insertFeature(p_feature)
-                            ext_profiles_provider.addFeature(feature)
+            feature_age = collision_feature.attribute('FEAT_AGE')
+            if feature_age > 200:
+                pass
+            else:
+                x_max_int = -shift * 100
+                x_max_ext = (shift + profile_length) * 100
+                for i in range(len(multi_point)):
+                    if i < len(multi_point) - 1:
+                        point1 = multi_point[i]
+                        point2 = multi_point[i + 1]
+                        flag = 0
+                    else:
+                        point1 = multi_point[i]
+                        point2 = multi_point[i - 1]
+                        flag = 1
+                    feature = QgsFeature()
+                    internal_profile_geometry = feature_conversion_tools.create_profile(point1,point2,0,x_max_int,step_length,flag, "inverse")
+                    if internal_profile_geometry:
+                        cont_included_profile_geometry = feature_conversion_tools.cut_profile_spi(internal_profile_geometry,
+                                                                                                  self.continent_polygons_layer,
+                                                                                                  "keep inside",
+                                                                                                  "positive", age,
+                                                                                                  False)
+                        if cont_included_profile_geometry:
+                            final_int_profile_geometry = feature_conversion_tools.check_profile_intersection(cont_included_profile_geometry,spatial_index_int_profiles, geometry_dict_int_profiles)
+                            if final_int_profile_geometry:
+                                feature.setGeometry(final_int_profile_geometry)
+                                feature.setAttributes(collision_feature.attributes())
+                                profile_points = final_int_profile_geometry.asMultiPoint()
+                                for point in profile_points:
+                                    point_id = len(geometry_dict_int_profiles)
+                                    point_geom = QgsGeometry.fromPointXY(point)
+                                    geometry_dict_int_profiles[point_id] = point_geom
+                                    p_feature = QgsFeature(point_id)
+                                    p_feature.setGeometry(point_geom)
+                                    spatial_index_int_profiles.insertFeature(p_feature)
+                                int_profiles_provider.addFeature(feature)
+                    feature = QgsFeature()
+                    external_profile_geometry = feature_conversion_tools.create_profile(point1,point2,0,x_max_ext,step_length,flag, "normal")
+                    if external_profile_geometry:
+                        cont_included_profile_geometry = feature_conversion_tools.cut_profile_spi(external_profile_geometry,
+                                                                                                  self.continent_polygons_layer,
+                                                                                                  "keep inside",
+                                                                                                  "positive", age,
+                                                                                                  False)
+                        if cont_included_profile_geometry:
+                            final_ext_profile_geometry = feature_conversion_tools.check_profile_intersection(cont_included_profile_geometry, spatial_index_ext_profiles, geometry_dict_ext_profiles)
+                            if final_ext_profile_geometry:
+                                feature.setGeometry(final_ext_profile_geometry)
+                                feature.setAttributes(collision_feature.attributes())
+                                profile_points = final_ext_profile_geometry.asMultiPoint()
+                                for point in profile_points:
+                                    point_id = len(geometry_dict_ext_profiles)
+                                    point_geom = QgsGeometry.fromPointXY(point)
+                                    geometry_dict_ext_profiles[point_id] = point_geom
+                                    p_feature = QgsFeature(point_id)
+                                    p_feature.setGeometry(point_geom)
+                                    spatial_index_ext_profiles.insertFeature(p_feature)
+                                ext_profiles_provider.addFeature(feature)
         COL_int_profiles.commitChanges()
         COL_ext_profiles.commitChanges()
         output_int_profiles_layer_path = os.path.join(self.output_folder_path,f"COL_int_profiles_{int(age)}.geojson")
@@ -205,6 +209,6 @@ class COLConversion:
                 "type": "FeatureCollection",
                 "features": all_points_features
             }, indent=2))
-        feature_conversion_tools.check_point_plate_intersection(age, "COL")
+        #feature_conversion_tools.check_point_plate_intersection(age, "COL")
         feature_conversion_tools.add_id_nodes_setting(age, "COL")
         feature_conversion_tools.add_layer_to_group(output_points_layer_path, f"{int(age)} Ma", "COL")

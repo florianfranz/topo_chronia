@@ -40,7 +40,7 @@ class FeatureConversionTools:
         velocity = velocity_dict.get(str(int(age)))
 
         if velocity is None:
-            raise ValueError(f"Velocity data not found for age: {age}")
+            velocity = 50
 
         ridge_depth = -2835  # default value is -2870 but old nodes show -2835
         ridge_depth = -3.541697688 * (velocity - 27.4810932747379) + ridge_depth
@@ -90,7 +90,7 @@ class FeatureConversionTools:
 
         nodes_to_delete = []
         for setting in settings:
-            distance_threshold = 0.5
+            distance_threshold = 0.475
             settings_to_check = []
             expression_setting = f"{param} = '{setting}'"
             index = settings.index(setting)
@@ -100,6 +100,8 @@ class FeatureConversionTools:
             elif setting == "ISO":
                 settings_to_check = ["PMW", "HOT"]
                 distance_threshold = 1.5
+            elif setting == "LWS":
+                settings_to_check = []
             elif setting == "CTN":
                 settings_to_check = ["RID", "ISO", "LWS", "ABA", "PMW", "CRA", "OTM", "PMC", "RIB", "UPS", "COL", "HOT"]
             elif setting == "CRA":
@@ -107,12 +109,131 @@ class FeatureConversionTools:
             elif setting == "RIB":
                 settings_to_check.remove("CTN")
                 settings_to_check.remove("PMW")
+                settings_to_check.append("UPS")
+                distance_threshold = 1
+            elif setting == "UPS":
+                settings_to_check.remove("RIB")
+                settings_to_check.remove("PMC")
+                settings_to_check.remove("PMW")
             elif setting == "PMW":
                 settings_to_check.remove("ISO")
                 settings_to_check.append("RIB")
+                settings_to_check.append("UPS")
+                settings_to_check.append("LWS")
+                distance_threshold = 1
+            elif setting == "PMC":
+                settings_to_check.append("RIB")
+                settings_to_check.append("UPS")
+                settings_to_check.append("LWS")
+                distance_threshold = 1
+            elif setting == "UPS":
+                settings_to_check.remove("LWS")
+            elif setting == "HOT":
+                settings_to_check = ["PMC", "PMW", "RID", "ABA"]
+                distance_threshold = 0.5
+            if settings_to_check:
+                values = "','".join(settings_to_check)
+                expression_to_check_against =f"{param} IN ('{values}')"
+                QgsMessageLog.logMessage(f"{expression_to_check_against}")
+                selected_features = list(
+                    all_nodes_layer.getFeatures(QgsFeatureRequest().setFilterExpression(expression_to_check_against)))
+                QgsMessageLog.logMessage(f"selected features : {len(selected_features)}")
+                spatial_index_other = QgsSpatialIndex(all_nodes_layer.getFeatures(QgsFeatureRequest().setFilterExpression(expression_to_check_against))
+                )
+                for feature in all_nodes_layer.getFeatures(QgsFeatureRequest().setFilterExpression(expression_setting)):
+                    geometry = feature.geometry()
+                    if feature.attribute("TYPE") == "COL" and feature.attribute("FEAT_AGE") > 330:
+                        nodes_to_delete.append(feature.id())
+                    bbox = geometry.boundingBox()
+                    candidate_ids_other = spatial_index_other.intersects(bbox.buffered(distance_threshold))
+                    for candidate_id in candidate_ids_other:
+                        feature_other = all_nodes_layer.getFeature(candidate_id)
+                        geometry_other = feature_other.geometry()
+                        distance = geometry.distance(geometry_other)
+                        if distance <= distance_threshold:
+                            if feature.id() not in nodes_to_delete:
+                                nodes_to_delete.append(feature.id())
+        QgsMessageLog.logMessage(f"Nodes to delete: {len(nodes_to_delete)}")
+        if nodes_to_delete:
+            with edit(all_nodes_layer):
+                all_nodes_layer.dataProvider().deleteFeatures(nodes_to_delete)
+            all_nodes_layer.commitChanges()
+
+
+    def clean_nodes_hot_polygon(self,age):
+        all_nodes_layer_path = os.path.join(self.output_folder_path, f"all_nodes_{int(age)}.geojson")
+        all_nodes_layer = QgsVectorLayer(all_nodes_layer_path, "All nodes", "ogr")
+        settings = ["ISO", "CTN"]
+        param = "TYPE"
+        diss_polygon_layer_path = os.path.join(self.output_folder_path,
+                                               f"HOT_polygons_{int(age)}_final.geojson")
+        if not os.path.exists(diss_polygon_layer_path):
+            return
+        else:
+            HOT_polygon_layer = QgsVectorLayer(diss_polygon_layer_path, f"HOT_aggregated_{int(age)}", 'ogr')
+            spatial_index_hot_polyg = QgsSpatialIndex(HOT_polygon_layer.getFeatures())
+        nodes_to_delete = []
+        for setting in settings:
+            expression_setting = f"{param} = '{setting}'"
+            for feature in all_nodes_layer.getFeatures(QgsFeatureRequest().setFilterExpression(expression_setting)):
+                geometry = feature.geometry()
+                bbox = geometry.boundingBox()
+                candidate_id_polys = spatial_index_hot_polyg.intersects(bbox)
+                for candidate_id_poly in candidate_id_polys:
+                    poly_geom = HOT_polygon_layer.getFeature(candidate_id_poly).geometry()
+                    if poly_geom.intersects(geometry):
+                        if feature.id() not in nodes_to_delete:
+                            nodes_to_delete.append(feature.id())
+
+        QgsMessageLog.logMessage(f"Nodes to delete: {len(nodes_to_delete)}")
+        if nodes_to_delete:
+            with edit(all_nodes_layer):
+                all_nodes_layer.dataProvider().deleteFeatures(nodes_to_delete)
+            all_nodes_layer.commitChanges()
+    def clean_nodes_simple(self,age):
+        """
+        Checks nodes from each setting against others inside the all nodes layer.
+        """
+        all_nodes_layer_path = os.path.join(self.output_folder_path, f"all_nodes_{int(age)}.geojson")
+        all_nodes_layer = QgsVectorLayer(all_nodes_layer_path, "All nodes", "ogr")
+        settings = ["RID", "ISO", "LWS", "ABA", "PMW", "CTN", "CRA", "OTM", "PMC", "RIB", "UPS", "COL", "HOT"]
+        param = "TYPE"
+
+        nodes_to_delete = []
+        for setting in settings:
+            distance_threshold = 0.475
+            settings_to_check = []
+            expression_setting = f"{param} = '{setting}'"
+            index = settings.index(setting)
+            settings_to_check = settings[:index]
+            if setting == "RID":
+                settings_to_check = []
+            elif setting == "ISO":
+                settings_to_check = ["PMW", "HOT"]
+                distance_threshold = 1.5
+            elif setting == "LWS":
+                settings_to_check = []
+            elif setting == "UPS":
+                settings_to_check = ["COL", "RID", "ISO"]
+            elif setting == "ABA":
+                settings_to_check = ["ISO"]
+            elif setting == "PMW":
+                settings_to_check = []
+            elif setting == "PMC":
+                settings_to_check = []
+            elif setting == "COL":
+                settings_to_check = ["PMC"]
+            elif setting == "RIB":
+                settings_to_check = ["UPS", "PMW", "PMC"]
+                distance_threshold = 0.8
+            elif setting == "CTN":
+                settings_to_check = ["RID", "ISO", "LWS", "ABA", "PMW", "CRA", "OTM", "PMC", "RIB", "UPS", "COL", "HOT"]
+            elif setting == "CRA":
+                settings_to_check = ["RIB"]
             elif setting == "HOT":
                 settings_to_check = ["PMC", "PMW"]
-                distance_threshold = 0.5
+            elif setting == "OTM":
+                settings_to_check = ["RID", "ISO", "LWS", "ABA", "PMW", "CTN", "CRA", "PMC", "RIB", "UPS", "COL", "HOT"]
             if settings_to_check:
                 values = "','".join(settings_to_check)
                 expression_to_check_against =f"{param} IN ('{values}')"
@@ -647,23 +768,26 @@ class FeatureConversionTools:
                     if x > 180 or x < -180 or y > 89.5 or y < -89.5:
                         pass
                     else:
-                        coords = [x,y]
-                        geojson_point_feature = {
-                            "type": "Feature",
-                            "properties": {
-                                "TYPE": type,
-                                "FEAT_AGE": feature_age,
-                                "DIST": distance,
-                                "Z": z,
-                                "ID": 45771972,
-                                "PLATE" : plate
-                            },
-                            "geometry": {
-                                "type": "Point",
-                                "coordinates": coords
+                        if z > 10000:
+                            pass
+                        else:
+                            coords = [x,y]
+                            geojson_point_feature = {
+                                "type": "Feature",
+                                "properties": {
+                                    "TYPE": type,
+                                    "FEAT_AGE": feature_age,
+                                    "DIST": distance,
+                                    "Z": z,
+                                    "ID": 45771972,
+                                    "PLATE" : plate
+                                },
+                                "geometry": {
+                                    "type": "Point",
+                                    "coordinates": coords
+                                }
                             }
-                        }
-                        all_nodes_features.append(geojson_point_feature)
+                            all_nodes_features.append(geojson_point_feature)
         if first_build is False:
             with open(output_nodes_layer_path) as f:
                 geojson = json.load(f)
@@ -696,23 +820,26 @@ class FeatureConversionTools:
                     if x > 180 or x < -180 or y > 90 or y < -90:
                         pass
                     else:
-                        coords = [x, y]
-                        geojson_point_feature = {
-                            "type": "Feature",
-                            "properties": {
-                                "TYPE": type,
-                                "FEAT_AGE": feature_age,
-                                "DIST": distance,
-                                "Z": z,
-                                "ID": 45771972,
-                                "PLATE": plate
-                            },
-                            "geometry": {
-                                "type": "Point",
-                                "coordinates": coords
+                        if z > 10000:
+                            pass
+                        else:
+                            coords = [x, y]
+                            geojson_point_feature = {
+                                "type": "Feature",
+                                "properties": {
+                                    "TYPE": type,
+                                    "FEAT_AGE": feature_age,
+                                    "DIST": distance,
+                                    "Z": z,
+                                    "ID": 45771972,
+                                    "PLATE": plate
+                                },
+                                "geometry": {
+                                    "type": "Point",
+                                    "coordinates": coords
+                                }
                             }
-                        }
-                        all_nodes_features.append(geojson_point_feature)
+                            all_nodes_features.append(geojson_point_feature)
         with open(output_nodes_layer_path, 'w') as output_file:
             output_file.write(json.dumps({
                 "type": "FeatureCollection",
@@ -746,7 +873,10 @@ class FeatureConversionTools:
                 "Fiji_W": "FIDJI_W",
                 "Carolina": "CAROLINE",
                 "India": "IND",
-                "Easter": "EAST"
+                "Easter": "EAST",
+                "Gondwana": "GOND",
+                "NixonFord": "NIXFORD",
+                "Sinti-Holo": "SINTIHOLO"
             }
 
             plate_names = {plate_name_mappings.get(plate_name_or, plate_name_or.upper()) for plate_name_or in

@@ -52,7 +52,8 @@ class RIBConversion:
             spatial_index_polygons.insertFeature(polygon)
         for feature in dens_RIB_lines.getFeatures():
             feature_abs_age = feature.attribute('AGE')
-            if feature_abs_age != 9999:
+            feature_age = feature.attribute("FEAT_AGE")
+            if feature_abs_age != 9999 and feature_age <= 100:
                 geom = feature.geometry()
                 if geom.intersects(continent_geometry):
                     if geom.isMultipart():
@@ -93,35 +94,38 @@ class RIBConversion:
                     feature = QgsFeature()
                     internal_profiles_geometry = feature_conversion_tools.create_profile(point1, point2, x_min, x_max_int,step_length, flag, "normal")
                     if internal_profiles_geometry:
-                        bas_included_profile_geometry = feature_conversion_tools.cut_profile_spi(internal_profiles_geometry, basins_polygon_layer, "keep inside", "positive", age, True)
-                        if bas_included_profile_geometry:
-                            cont_excluded_profile_geometry = feature_conversion_tools.cut_profile_spi(bas_included_profile_geometry, self.continent_polygons_layer, "keep inside", "positive", age, False)
-                            if cont_excluded_profile_geometry:
-                                final_int_profile_geometry = feature_conversion_tools.check_profile_intersection(
-                                        cont_excluded_profile_geometry, spatial_index_int_profiles,
-                                        geometry_dict_int_profiles)
-                                if final_int_profile_geometry:
-                                    feature.setGeometry(final_int_profile_geometry)
-                                    feature.setAttributes(rift_feature.attributes())
-                                    profile_points = final_int_profile_geometry.asMultiPoint()
-                                    for point in profile_points:
-                                        point_id = len(geometry_dict_int_profiles)
-                                        point_geom = QgsGeometry.fromPointXY(point)
-                                        geometry_dict_int_profiles[point_id] = point_geom
-                                        p_feature = QgsFeature(point_id)
-                                        p_feature.setGeometry(point_geom)
-                                        spatial_index_int_profiles.insertFeature(p_feature)
-                                    internal_profiles_provider.addFeature(feature)
+                        """bas_included_profile_geometry = feature_conversion_tools.cut_profile_spi(internal_profiles_geometry, basins_polygon_layer, "keep inside", "positive", age, True)
+                        if bas_included_profile_geometry:"""
+                        cont_excluded_profile_geometry = feature_conversion_tools.cut_profile_spi(internal_profiles_geometry, self.continent_polygons_layer, "keep inside", "positive", age, False)
+                        if cont_excluded_profile_geometry:
+                            final_int_profile_geometry = feature_conversion_tools.check_profile_intersection(
+                                    cont_excluded_profile_geometry, spatial_index_int_profiles,
+                                    geometry_dict_int_profiles)
+                            if final_int_profile_geometry:
+                                feature.setGeometry(final_int_profile_geometry)
+                                feature.setAttributes(rift_feature.attributes())
+                                profile_points = final_int_profile_geometry.asMultiPoint()
+                                for point in profile_points:
+                                    point_id = len(geometry_dict_int_profiles)
+                                    point_geom = QgsGeometry.fromPointXY(point)
+                                    geometry_dict_int_profiles[point_id] = point_geom
+                                    p_feature = QgsFeature(point_id)
+                                    p_feature.setGeometry(point_geom)
+                                    spatial_index_int_profiles.insertFeature(p_feature)
+                                internal_profiles_provider.addFeature(feature)
                     feature = QgsFeature()
                     external_profile_geometry = feature_conversion_tools.create_profile(point1, point2, x_min, x_max_ext,step_length, flag, "inverse")
                     if external_profile_geometry:
-                        bas_excluded_profile_geometry = feature_conversion_tools.cut_profile_spi(external_profile_geometry, basins_polygon_layer, "keep outside", "positive", age, True)
-                        if bas_excluded_profile_geometry:
-                            cont_excluded_profile_geometry = feature_conversion_tools.cut_profile_spi(bas_excluded_profile_geometry, self.continent_polygons_layer, "keep inside", "positive", age, False)
-                            if cont_excluded_profile_geometry:
+                        """bas_excluded_profile_geometry = feature_conversion_tools.cut_profile_spi(external_profile_geometry, basins_polygon_layer, "keep outside", "positive", age, True)
+                        if bas_excluded_profile_geometry:"""
+                        cont_excluded_profile_geometry = feature_conversion_tools.cut_profile_spi(external_profile_geometry, self.continent_polygons_layer, "keep inside", "positive", age, False)
+                        if cont_excluded_profile_geometry: #Need also to do a check with internal profiles: prioritize external (WIP)
+                            pre_final_ext_profile_geometry = feature_conversion_tools.check_profile_intersection(cont_excluded_profile_geometry, spatial_index_ext_profiles,
+                                geometry_dict_ext_profiles)
+                            if pre_final_ext_profile_geometry:
                                 final_ext_profile_geometry = feature_conversion_tools.check_profile_intersection(
-                                    cont_excluded_profile_geometry, spatial_index_ext_profiles,
-                                    geometry_dict_ext_profiles)
+                                    pre_final_ext_profile_geometry, spatial_index_int_profiles,
+                                    geometry_dict_int_profiles)
                                 if final_ext_profile_geometry:
                                     feature.setGeometry(final_ext_profile_geometry)
                                     feature.setAttributes(rift_feature.attributes())
@@ -224,6 +228,6 @@ class RIBConversion:
                 "type": "FeatureCollection",
                 "features": all_points_features
             }, indent=2))
-        feature_conversion_tools.check_point_plate_intersection(age, "RIB")
+        #feature_conversion_tools.check_point_plate_intersection(age, "RIB")
         feature_conversion_tools.add_id_nodes_setting(age, "RIB")
         feature_conversion_tools.add_layer_to_group(output_points_layer_path, f"{int(age)} Ma", "RIB")

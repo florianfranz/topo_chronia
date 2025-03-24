@@ -39,7 +39,7 @@ class OTMConversion:
         OTM_multipoints.startEditing()
         attributes = dens_OTM_lines.fields().toList()
         points_provider.addAttributes(attributes)
-        points_provider.addAttributes([ QgsField('Z', QVariant.Double),QgsField('CONT', QVariant.Double),QgsField('OC', QVariant.Double),QgsField('FEAT_AGE', QVariant.Double)])
+        points_provider.addAttributes([ QgsField('Z', QVariant.Double),QgsField('CONT', QVariant.Double),QgsField('OC', QVariant.Double),QgsField('Z_RASTER', QVariant.Double),QgsField('FEAT_AGE', QVariant.Double)])
         OTM_multipoints.updateFields()
         OTM_multipoints.commitChanges()
         for feature in dens_OTM_lines.getFeatures():
@@ -52,9 +52,30 @@ class OTMConversion:
             points_provider.addFeature(new_feature)
         OTM_multipoints.commitChanges()
         OTM_profiles = QgsVectorLayer("MultiPoint?crs=EPSG:4326","OTM Profiles","memory")
+        attributes = OTM_multipoints.fields().toList()
         profiles_provider = OTM_profiles.dataProvider()
         profiles_provider.addAttributes(attributes)
         OTM_profiles.updateFields()
+        field_idx_rd = OTM_multipoints.fields().indexOf('Z_RASTER')
+        with edit(OTM_multipoints):
+            for feature in OTM_multipoints.getFeatures():
+                geom = feature.geometry()
+                multi_point = geom.asMultiPoint()
+                middle_index = len(multi_point) // 2
+                middle_point = multi_point[middle_index]
+                coords = QgsPointXY(middle_point)
+                val, res = raster_prelim.dataProvider().sample(coords, 1)
+                if math.isnan(val):
+                    raster_depth = 1.4109347442680775*ridge_depth
+                else:
+                    raster_depth = float(val)
+                    if raster_depth < -5500:
+                        raster_depth = -5500
+                OTM_multipoints.changeAttributeValue(feature.id(), field_idx_rd, raster_depth)
+        OTM_multipoints.commitChanges()
+        otm_multipoint_path = os.path.join(self.output_folder_path, f"otm_multipoint_{int(age)}.geojson")
+        QgsVectorFileWriter.writeAsVectorFormat(OTM_multipoints, otm_multipoint_path, 'utf-8', OTM_multipoints.crs(),
+                                                "GeoJSON")
         for other_margin_feature in OTM_multipoints.getFeatures():
             geom = other_margin_feature.geometry()
             multi_point = geom.asMultiPoint()
@@ -83,6 +104,7 @@ class OTMConversion:
         for profile_feature in OTM_profiles.getFeatures():
             feature_abs_age = profile_feature.attribute('AGE')
             plate = profile_feature.attribute('PLATE')
+            raster_depth = profile_feature.attribute('Z_RASTER')
             feature_age = feature_abs_age - age
             geom = profile_feature.geometry()
             multi_point = geom.asMultiPoint()
@@ -97,11 +119,6 @@ class OTMConversion:
                 if cont_feature.geometry().intersects(first_point_geom) and not cont_feature.geometry().intersects(
                         last_point_geom):
                     #Case 1: first point is in continents, last point is in oceans
-                    val, res = raster_prelim.dataProvider().sample(last_point, 1)
-                    if math.isnan(val):
-                        raster_depth = -4000
-                    else:
-                        raster_depth = float(val)
                     raster_age = feature_conversion_tools.inversePCM(raster_depth,ridge_depth)
                     abys_sed = sed_tools.abyssal_sediments(age,age + raster_age)
                     z_with_sed = abys_sed + raster_depth
@@ -142,8 +159,6 @@ class OTMConversion:
                 elif not cont_feature.geometry().intersects(
                     first_point_geom) and cont_feature.geometry().intersects(last_point_geom):
                     #Case 2: last point is in continents, first point is in oceans
-                    val, res = raster_prelim.dataProvider().sample(first_point, 1)
-                    raster_depth = float(val)
                     raster_age = feature_conversion_tools.inversePCM(raster_depth,ridge_depth)
                     abys_sed = sed_tools.abyssal_sediments(age,age + raster_age)
                     z_with_sed = abys_sed + raster_depth
@@ -187,6 +202,6 @@ class OTMConversion:
                 "type": "FeatureCollection",
                 "features": all_points_features
             }, indent=2))
-        feature_conversion_tools.check_point_plate_intersection(age, "OTM")
+        #feature_conversion_tools.check_point_plate_intersection(age, "OTM")
         feature_conversion_tools.add_id_nodes_setting(age, "OTM")
         feature_conversion_tools.add_layer_to_group(output_points_layer_path, f"{int(age)} Ma", "OTM")

@@ -1,6 +1,6 @@
 import os
 import processing
-from qgis.core import QgsVectorLayer,QgsFeatureRequest,QgsMessageLog, Qgis,QgsProject
+from qgis.core import QgsVectorLayer,QgsFeatureRequest,QgsMessageLog, Qgis,QgsProject, QgsProcessingException
 
 from ...base_tools import BaseTools
 base_tools = BaseTools()
@@ -43,7 +43,11 @@ class PreRasterTools:
                 "Fiji_W": "FIDJI_W",
                 "Carolina": "CAROLINE",
                 "India": "IND",
-                "Easter": "EAST"
+                "Easter": "EAST",
+                "Gondwana": "GOND",
+                "NixonFord": "NIXFORD",
+                "Sinti-Holo": "SINTIHOLO",
+                "Laurentia": "LAURUSSIA"
             }
 
             plate_name = plate_name_mappings.get(plate_name_or,
@@ -143,13 +147,20 @@ class PreRasterTools:
 
         qgis_tin_raster_path = os.path.join(plate_output_folder, f"qgis_tin_prelim_{int(age)}.tif")
 
-        processing.run("qgis:tininterpolation", {
-            'INTERPOLATION_DATA': f"{plate_nodes_layer.source()}::~::0::~::3::~::0",
-            'METHOD': 0,
-            'EXTENT': plate_extent,
-            'PIXEL_SIZE': 0.1,
-            'OUTPUT': qgis_tin_raster_path,
-        })
+        try:
+            processing.run("qgis:tininterpolation", {
+                'INTERPOLATION_DATA': f"{plate_nodes_layer.source()}::~::0::~::3::~::0",
+                'METHOD': 0,
+                'EXTENT': plate_extent,
+                'PIXEL_SIZE': 0.1,
+                'OUTPUT': qgis_tin_raster_path,
+            })
+        except QgsProcessingException as e:
+            QgsMessageLog.logMessage(f"QGIS Processing error: {e} with plate {plate_name}", "Interpolation", Qgis.Info)
+            return
+        except Exception as e:
+            QgsMessageLog.logMessage(f"Unexpected error: {e} with plate {plate_name}", "Interpolation", Qgis.Info)
+            return
         plate_name_filter = ( f"{self.APPEARANCE} = {age} AND " f"({self.PLATE} = '{plate_name}')")
         plate_attributes = self.plate_polygons_layer.fields().toList()
         plate_features = self.plate_polygons_layer.getFeatures(QgsFeatureRequest().setFilterExpression(plate_name_filter))

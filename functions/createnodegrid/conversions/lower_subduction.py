@@ -34,8 +34,8 @@ class LWSConversion:
     def lower_subduction_to_nodes(self,age):
         ridge_depth = feature_conversion_tools.get_ridge_depth(age)
         x_min = 0
-        step_length = 50
-        x_max = 101
+        step_length = 100
+        x_max = 201
         raster_prelim_path = os.path.join(self.output_folder_path,f"qgis_tin_raster_prelim_{int(age)}.tif")
         raster_prelim = QgsRasterLayer(raster_prelim_path,"Preliminary Raster")
         lws_multipoint_path = os.path.join(self.output_folder_path, f"lws_multipoint_{int(age)}.geojson")
@@ -46,12 +46,32 @@ class LWSConversion:
         profiles_provider.addAttributes(attributes)
         LWS_profiles.updateFields()
         field_idx_oid = lws_multipoint.fields().indexOf('ORIG_ID')
+        field_idx_rd = lws_multipoint.fields().indexOf('Z_RASTER')
         spatial_index_profiles = QgsSpatialIndex()
         geometry_dict_profiles = {}
         with edit(lws_multipoint):
             for lower_subduction_feature in lws_multipoint.getFeatures():
-                orig_id = lower_subduction_feature.id()
-                lws_multipoint.changeAttributeValue(lower_subduction_feature.id(),field_idx_oid,orig_id)
+                geom = lower_subduction_feature.geometry()
+                multi_point = geom.asMultiPoint()
+                if len(multi_point) < 3:
+                    pass
+                else:
+                    middle_index = len(multi_point) // 2
+                    middle_point = multi_point[middle_index]
+                    coords = QgsPointXY(middle_point)
+                    val, res = raster_prelim.dataProvider().sample(coords, 1)
+
+                    if not isinstance(val, (int, float)) or math.isnan(val):
+                        raster_depth = 1.4109347442680775*ridge_depth
+                    elif val is None:
+                        raster_depth = 1.4109347442680775*ridge_depth
+                    else:
+                        raster_depth = float(val)
+                        if raster_depth < -5500:
+                            raster_depth = -5500
+                    orig_id = lower_subduction_feature.id()
+                    lws_multipoint.changeAttributeValue(lower_subduction_feature.id(),field_idx_oid,orig_id)
+                    lws_multipoint.changeAttributeValue(lower_subduction_feature.id(), field_idx_rd, raster_depth)
         lws_multipoint.commitChanges()
         for lower_subduction_feature in lws_multipoint.getFeatures():
             geom = lower_subduction_feature.geometry()
@@ -100,8 +120,14 @@ class LWSConversion:
         )
         for profile_feature in LWS_profiles.getFeatures():
             feature_abs_age = profile_feature.attribute('AGE')
+            if feature_abs_age == 999:
+                feature_abs_age = age
             feature_age = feature_abs_age - age
             plate = profile_feature.attribute('PLATE')
+            try:
+                raster_depth = float(profile_feature.attribute('Z_RASTER'))
+            except (TypeError, ValueError):
+                raster_depth = 1.4109347442680775*ridge_depth
             if not profile_feature.hasGeometry():
                 continue
             geom = profile_feature.geometry()
@@ -115,7 +141,7 @@ class LWSConversion:
                     for candidate_id in candidate_ids:
                         continent_feature = next(
                             self.continent_polygons_layer.getFeatures(QgsFeatureRequest(candidate_id)))
-                        continent_geom = continent_feature.geometry()
+                        continent_geom = continent_feature.geometry().buffer(-0.05, 5)
                         if continent_geom.contains(vertex_xy):
                             intersects = True
                             break
@@ -123,15 +149,11 @@ class LWSConversion:
                     point = QgsPointXY(vertex[0], vertex[1])
                     distance = feature_conversion_tools.prod_scal(feat_start_point, 1, point, 1)
                     coords = [vertex[0], vertex[1]]
-                    val, res = raster_prelim.dataProvider().sample(point, 1)
-                    if math.isnan(val):
-                        raster_depth = -4500
-                    else:
-                        raster_depth = float(val)
                     if distance == 0:
                         z = float(sub_tools.trench_depth(raster_depth, ridge_depth))
                         z_with_sed = z
                         position = "Trench"
+                        abys_sed = 0
                     else:
                         abys_sed = sed_tools.abyssal_sediments(age, feature_abs_age)
                         z = raster_depth
@@ -147,6 +169,8 @@ class LWSConversion:
                             "Z_WITH_SED": z_with_sed,
                             "POSITION": position,
                             "PLATE": plate,
+                            "Z_RASTER": raster_depth,
+                            "ABYS_SED": abys_sed
                         },
                         "geometry": {
                             "type": "Point",
@@ -161,7 +185,7 @@ class LWSConversion:
                 "type": "FeatureCollection",
                 "features": all_points_features
             }, indent=2))
-        feature_conversion_tools.check_point_plate_intersection(age, "LWS")
+        #feature_conversion_tools.check_point_plate_intersection(age, "LWS")
         feature_conversion_tools.add_id_nodes_setting(age, "LWS")
         feature_conversion_tools.add_layer_to_group(output_points_layer_path, f"{int(age)} Ma", "LWS")
 

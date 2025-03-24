@@ -1,5 +1,6 @@
 import os
 import json
+import math
 from qgis.core import (Qgis, edit, QgsVectorLayer, QgsFeatureRequest, QgsRasterLayer, QgsMessageLog, QgsField,
                        QgsVectorFileWriter, QgsGeometry, QgsPointXY, QgsFeature, QgsProject, QgsSpatialIndex)
 from ...base_tools import BaseTools
@@ -31,6 +32,7 @@ class PMCConversion:
         field_idx_xc = PM_multipoints.fields().indexOf('X_CREST')
         field_idx_zr = PM_multipoints.fields().indexOf('Z_RASTER')
         field_idx_xmax = PM_multipoints.fields().indexOf('X_MAX')
+        ridge_depth = feature_conversion_tools.get_ridge_depth(age)
         with edit(PM_multipoints):
             for feature in PM_multipoints.getFeatures():
                 feature_age = feature.attribute("FEAT_AGE")
@@ -40,19 +42,17 @@ class PMCConversion:
                 PM_multipoints.changeAttributeValue(feature.id(), field_idx_xc, float(x_crest))
                 geom = feature.geometry()
                 multi_point = geom.asMultiPoint()
-                num_points = len(multi_point)
-                if num_points <= 2:
-                    middle_index = 1
-                else:
-                    middle_index = (num_points - 1) // 2
+                middle_index = len(multi_point) // 2
                 middle_point = multi_point[middle_index]
                 coords = QgsPointXY(middle_point)
                 val, res = raster_prelim.dataProvider().sample(coords, 1)
-                if val:
-                    val = float(val)
+                if math.isnan(val):
+                    raster_depth =1.4109347442680775*ridge_depth
                 else:
-                    val = -4000
-                PM_multipoints.changeAttributeValue(feature.id(), field_idx_zr, val)
+                    raster_depth = float(val)
+                    if raster_depth < -5500:
+                        raster_depth = -5500
+                PM_multipoints.changeAttributeValue(feature.id(), field_idx_zr, raster_depth)
                 length = -pm_tools.wedge_x_pm_new(feature_age) * 100  # Multiply by a 100 to convert from degrees to km
                 x_max = -length
                 PM_multipoints.changeAttributeValue(feature.id(), field_idx_xmax, x_max)
@@ -119,7 +119,7 @@ class PMCConversion:
             x_wedge = pm_tools.wedge_x_pm_new(feature_age)
             y_wedge = pm_tools.wedge_y_pm_new(feature_age)
             ridge_depth = feature_conversion_tools.get_ridge_depth(age)
-            raster_depth = feature_conversion_tools.PCM(feature_age, ridge_depth)
+            raster_depth = float(profile.attribute('Z_RASTER'))
             geom = profile.geometry()
             continent_y = 240.38
             multi_point = geom.asMultiPoint()
@@ -153,6 +153,6 @@ class PMCConversion:
                 "type": "FeatureCollection",
                 "features": all_points_features
             }, indent=2))
-        feature_conversion_tools.check_point_plate_intersection(age, "PMC")
+        #feature_conversion_tools.check_point_plate_intersection(age, "PMC")
         feature_conversion_tools.add_id_nodes_setting(age, "PMC")
         feature_conversion_tools.add_layer_to_group(output_points_layer_path, f"{int(age)} Ma", "PMC")

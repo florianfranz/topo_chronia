@@ -144,10 +144,10 @@ class SeaLevel:
                     else:
                         water_column = -z_initial
                     z_with_dSL = z_initial - dSL
-                    if z_with_dSL >= 0:
+                    if z_with_dSL >= 0: #Above 70m
                         subsidence_cor = 0
                         dSL_cor = 0
-                    elif 0 > z_with_dSL >= -dSL:
+                    elif 0 > z_with_dSL >= -dSL:#Between 0 and 70m
                         subsidence_cor = z_with_dSL / buoy_fac
                         dSL_cor = - z_with_dSL
                     elif z_with_dSL < - dSL:

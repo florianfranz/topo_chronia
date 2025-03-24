@@ -201,16 +201,19 @@ class DataPreparation:
                     multipolygon_coords.append(polygon_coords)
 
             else:
-                geom = feature.geometry().asPolygon()
-                polygon_coords = []
-                for vertex in geom:
-                    x_coord = vertex.x()
-                    y_coord = vertex.y()
-                    coords = [x_coord, y_coord]
-                    polygon_coords.append(coords)
-                if polygon_coords[0] != polygon_coords[-1]:
-                    polygon_coords.append(polygon_coords[0])
-                multipolygon_coords.append(polygon_coords)
+                if feature.geometry().isEmpty():
+                    pass
+                else:
+                    geom = feature.geometry().asPolygon()
+                    polygon_coords = []
+                    for vertex in geom:
+                        x_coord = vertex.x()
+                        y_coord = vertex.y()
+                        coords = [x_coord, y_coord]
+                        polygon_coords.append(coords)
+                    if polygon_coords[0] != polygon_coords[-1]:
+                        polygon_coords.append(polygon_coords[0])
+                    multipolygon_coords.append(polygon_coords)
         multi_polygon_feature = [{
             "type": "Feature",
             "properties": {
@@ -243,6 +246,7 @@ class DataPreparation:
         continent_features = list(
             self.continent_polygons_layer.getFeatures(QgsFeatureRequest().setFilterExpression(continent_filter))
         )
+        QgsMessageLog.logMessage(f"For age {age}, COB has {len(continent_features)}")
         if len(continent_features) == 0:
             QgsMessageLog.logMessage("No features found for the selected age, skipped.",
                                      "Create Node Grid",

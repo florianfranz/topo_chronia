@@ -140,7 +140,7 @@ class LinesSelections():
         sub_multipoints.startEditing()
         attributes = dens_SUB_lines.fields().toList()
         points_provider.addAttributes(attributes)
-        points_provider.addAttributes([QgsField('Z', QVariant.Double), QgsField('ORIG_ID', QVariant.Double)])
+        points_provider.addAttributes([QgsField('Z', QVariant.Double), QgsField('Z_RASTER', QVariant.Double), QgsField('ORIG_ID', QVariant.Double)])
         sub_multipoints.updateFields()
         sub_multipoints.commitChanges()
         for feature in dens_SUB_lines.getFeatures():

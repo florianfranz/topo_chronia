@@ -36,12 +36,14 @@ class ABAConversion:
         step_length = 50
         dens_ABA_lines_layer_path = os.path.join(self.output_folder_path, f"dens_ABA_lines_{int(age)}.geojson")
         dens_ABA_layer = QgsVectorLayer(dens_ABA_lines_layer_path, "Simplified ABA Lines", 'ogr')
+        raster_prelim_path = os.path.join(self.output_folder_path, f"qgis_tin_raster_prelim_{int(age)}.tif")
+        raster_prelim = QgsRasterLayer(raster_prelim_path, "Preliminary Raster")
         attributes = dens_ABA_layer.fields().toList()
         ABA_multipoints = QgsVectorLayer("MultiPoint?crs=EPSG:4326","ABA Multipoints","memory")
         points_provider = ABA_multipoints.dataProvider()
         ABA_multipoints.startEditing()
         points_provider.addAttributes(attributes)
-        points_provider.addAttributes([QgsField('LAT_DIST', QVariant.Double),QgsField('GAUSS_FAC', QVariant.Double)])
+        points_provider.addAttributes([QgsField('LAT_DIST', QVariant.Double),QgsField('Z_RASTER', QVariant.Double),QgsField('GAUSS_FAC', QVariant.Double)])
         ABA_multipoints.updateFields()
         ABA_multipoints.commitChanges()
         spatial_index_pos_profiles = QgsSpatialIndex()
@@ -71,11 +73,22 @@ class ABAConversion:
         ABA_pos_profiles.updateFields()
         field_idx_ld = ABA_multipoints.fields().indexOf('LAT_DIST')
         field_idx_gf = ABA_multipoints.fields().indexOf('GAUSS_FAC')
+        field_idx_rd = ABA_multipoints.fields().indexOf('Z_RASTER')
         with edit(ABA_multipoints):
             for abandoned_arc_feature in ABA_multipoints.getFeatures():
                 geom = abandoned_arc_feature.geometry()
                 multi_point = geom.asMultiPoint()
                 point_init = multi_point[0]
+                middle_index = len(multi_point) // 2
+                middle_point = multi_point[middle_index]
+                coords = QgsPointXY(middle_point)
+                val, res = raster_prelim.dataProvider().sample(coords, 1)
+                if math.isnan(val):
+                    raster_depth = 1.4109347442680775*ridge_depth
+                else:
+                    raster_depth = float(val)
+                    if raster_depth < -5500:
+                        raster_depth = -5500
                 for i in range(len(multi_point)):
                     if i < len(multi_point) - 1:
                         point1 = multi_point[i]
@@ -90,6 +103,7 @@ class ABAConversion:
                         (lat_distance * (2 * math.pi)) / PARAM_AA_lambdaF) + PARAM_AA_fG
                     ABA_multipoints.changeAttributeValue(abandoned_arc_feature.id(), field_idx_ld, lat_distance)
                     ABA_multipoints.changeAttributeValue(abandoned_arc_feature.id(), field_idx_gf, gauss_factor)
+                    ABA_multipoints.changeAttributeValue(abandoned_arc_feature.id(), field_idx_rd, raster_depth)
                     updated_feature = next(ABA_multipoints.getFeatures(QgsFeatureRequest(abandoned_arc_feature.id())))
                     feature = QgsFeature()
                     negative_profile_geometry = feature_conversion_tools.create_profile(point1,point2,x_min,x_max_neg,step_length, flag, "inverse")
@@ -197,12 +211,12 @@ class ABAConversion:
         for profile in ABA_neg_profiles.getFeatures():
             gauss_factor = profile.attribute('GAUSS_FAC')
             plate = profile.attribute('PLATE')
+            raster_depth = profile.attribute('Z_RASTER')
             geom = profile.geometry()
             multi_point = geom.asMultiPoint()
             feature_abs_age = profile.attribute('AGE')
             feature_age = feature_abs_age - age
             feat_start_point = multi_point[-1]
-            raster_depth = feature_conversion_tools.PCM(feature_age, ridge_depth)
             for i in range(len(multi_point)):
                 distance = feature_conversion_tools.prod_scal(feat_start_point,1,multi_point[i],1)
                 if distance == 0:
@@ -266,6 +280,6 @@ class ABAConversion:
                 "type": "FeatureCollection",
                 "features": all_points_features
             }, indent=2))
-        feature_conversion_tools.check_point_plate_intersection(age, "ABA")
+        #feature_conversion_tools.check_point_plate_intersection(age, "ABA")
         feature_conversion_tools.add_id_nodes_setting(age, "ABA")
         feature_conversion_tools.add_layer_to_group(output_points_layer_path, f"{int(age)} Ma", "ABA")

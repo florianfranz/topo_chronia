@@ -75,7 +75,7 @@ class HOTConversion:
                         location = "Oceanic"
                         val, res = raster_prelim.dataProvider().sample(point_geom, 1)
                         if math.isnan(val):
-                            raster_depth = -4500
+                            raster_depth = 1.4109347442680775*ridge_depth
                         else:
                             raster_depth = float(val)
                         hs_z_value = 4500
@@ -180,7 +180,7 @@ class HOTConversion:
                                         hot_crest_z = 240.38
                                     else:
                                         location = "Oceanic"
-                                        raster_depth= -4500
+                                        raster_depth = 1.4109347442680775*ridge_depth
                                         hot_crest_z = raster_depth + hot_crest
                                     HOT_geojson_feature = {
                                         "type": "Feature",
@@ -224,7 +224,7 @@ class HOTConversion:
                                 hot_crest_z = 240.38
                             else:
                                 location = "Oceanic"
-                                raster_depth = -4500
+                                raster_depth = 1.4109347442680775*ridge_depth
                                 hot_crest_z = raster_depth + hot_crest
                             HOT_geojson_feature = {
                                 "type": "Feature",
