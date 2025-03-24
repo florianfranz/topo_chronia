@@ -288,6 +288,6 @@ class UPSConversion:
         UPS_nodes_layer.commitChanges()
         #feature_conversion_tools.check_point_plate_intersection(age, "UPS")
         feature_conversion_tools.add_id_nodes_setting(age, "UPS")
-        feature_conversion_tools.add_layer_to_group(output_points_layer_path, f"{int(age)} Ma", "UPS")
+        #feature_conversion_tools.add_layer_to_group(output_points_layer_path, f"{int(age)} Ma", "UPS")
 
 

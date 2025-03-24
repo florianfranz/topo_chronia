@@ -230,4 +230,4 @@ class RIBConversion:
             }, indent=2))
         #feature_conversion_tools.check_point_plate_intersection(age, "RIB")
         feature_conversion_tools.add_id_nodes_setting(age, "RIB")
-        feature_conversion_tools.add_layer_to_group(output_points_layer_path, f"{int(age)} Ma", "RIB")
+        #feature_conversion_tools.add_layer_to_group(output_points_layer_path, f"{int(age)} Ma", "RIB")
