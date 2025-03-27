@@ -363,3 +363,4 @@ class CreateNodeGridDialog(QtWidgets.QDialog, FORM_CLASS):
         age_values = [float(item.text().split()[0]) for item in selected_items]
         for age in age_values:
             feature_conversion_tools.clean_nodes(age)
+            feature_conversion_tools.clean_nodes_hot_polygon(age)

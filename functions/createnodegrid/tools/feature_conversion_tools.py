@@ -98,7 +98,7 @@ class FeatureConversionTools:
             if setting == "RID":
                 settings_to_check = []
             elif setting == "ISO":
-                settings_to_check = ["PMW", "HOT"]
+                settings_to_check = ["PMW", "HOT", "LWS"]
                 distance_threshold = 1.5
             elif setting == "LWS":
                 settings_to_check = []
@@ -110,6 +110,7 @@ class FeatureConversionTools:
                 settings_to_check.remove("CTN")
                 settings_to_check.remove("PMW")
                 settings_to_check.append("UPS")
+                settings_to_check.append("RIB")
                 distance_threshold = 1
             elif setting == "UPS":
                 settings_to_check.remove("RIB")
@@ -117,17 +118,19 @@ class FeatureConversionTools:
                 settings_to_check.remove("PMW")
             elif setting == "PMW":
                 settings_to_check.remove("ISO")
-                settings_to_check.append("RIB")
                 settings_to_check.append("UPS")
                 settings_to_check.append("LWS")
                 distance_threshold = 1
             elif setting == "PMC":
-                settings_to_check.append("RIB")
                 settings_to_check.append("UPS")
                 settings_to_check.append("LWS")
+                settings_to_check.remove("PMW")
                 distance_threshold = 1
             elif setting == "UPS":
                 settings_to_check.remove("LWS")
+            elif setting == "COL":
+                settings_to_check.append("RIB")
+                distance_threshold = 0.75
             elif setting == "HOT":
                 settings_to_check = ["PMC", "PMW", "RID", "ABA"]
                 distance_threshold = 0.5
@@ -151,8 +154,30 @@ class FeatureConversionTools:
                         geometry_other = feature_other.geometry()
                         distance = geometry.distance(geometry_other)
                         if distance <= distance_threshold:
-                            if feature.id() not in nodes_to_delete:
-                                nodes_to_delete.append(feature.id())
+                            if feature.attribute("TYPE") == "PMW" and feature_other.attribute("TYPE") == "UPS":
+                                if feature.attribute("DIST") < 1 and feature_other.attribute("DIST") > 1:
+                                    if feature_other.id() not in nodes_to_delete:
+                                        nodes_to_delete.append(feature_other.id())
+                                else:
+                                    if feature.id() not in nodes_to_delete:
+                                        nodes_to_delete.append(feature.id())
+                            elif feature.attribute("TYPE") == "PMC" and feature_other.attribute("TYPE") == "PMW":
+                                if feature.attribute("DIST") > 1 and feature_other.attribute("DIST") < 1:
+                                    if feature.id() not in nodes_to_delete:
+                                        nodes_to_delete.append(feature.id())
+                                    else:
+                                        pass
+                            elif feature.attribute("TYPE") == "RIB" and feature_other.attribute("TYPE") == "RIB":
+                                if feature.attribute('DIST') < 0 and feature_other.attribute("DIST") > 0:
+                                    if feature_other.id() not in nodes_to_delete:
+                                        nodes_to_delete.append(feature_other.id())
+                                    elif feature.attribute('DIST') > 0 and feature_other.attribute("DIST") < 0:
+                                        nodes_to_delete.append(feature.id())
+                                    else:
+                                        pass
+                            else:
+                                if feature.id() not in nodes_to_delete:
+                                    nodes_to_delete.append(feature.id())
         QgsMessageLog.logMessage(f"Nodes to delete: {len(nodes_to_delete)}")
         if nodes_to_delete:
             with edit(all_nodes_layer):
