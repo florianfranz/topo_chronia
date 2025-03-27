@@ -22,7 +22,7 @@
      <height>612</height>
     </rect>
    </property>
-   <widget class="QWidget" name="">
+   <widget class="QWidget" name="layoutWidget">
     <property name="geometry">
      <rect>
       <x>0</x>
@@ -62,6 +62,13 @@
         <widget class="QPushButton" name="Action_FinalRaster_pushButton">
          <property name="text">
           <string>Interpolate Final Raster</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QPushButton" name="Action_ProcessEverything_pushButton">
+         <property name="text">
+          <string>Process All Steps</string>
          </property>
         </widget>
        </item>
