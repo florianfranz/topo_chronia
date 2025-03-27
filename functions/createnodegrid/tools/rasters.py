@@ -77,13 +77,11 @@ class PreRasterTools:
                 provider.addAttributes(attributes)
                 provider.addFeatures(nodes_features)
                 plate_nodes_layer.commitChanges()
-                QgsProject.instance().addMapLayer(plate_nodes_layer)
 
                 self.perform_prelim_raster_interpolation_plate_by_plate(plate_nodes_layer,
                                                                         plate_name_or,
                                                                         bbox,
                                                                         age)
-                QgsProject.instance().removeMapLayer(plate_nodes_layer)
 
         age_output_folder = os.path.join(self.output_folder_path, str(int(age)))
         self.create_mosaic_from_rasters(age_output_folder,age)
@@ -170,7 +168,6 @@ class PreRasterTools:
         pol_provider.addAttributes(plate_attributes)
         pol_provider.addFeatures(plate_features)
         plate_polygon_layer.commitChanges()
-        QgsProject.instance().addMapLayer(plate_polygon_layer)
 
         clipped_raster_path = os.path.join(plate_output_folder, f"qgis_tin_prelim_{int(age)}_clipped.tif")
 
@@ -185,7 +182,6 @@ class PreRasterTools:
             'KEEP_RESOLUTION': True,  # Keep original resolution
             'OUTPUT': clipped_raster_path,
         })
-        QgsProject.instance().removeMapLayer(plate_polygon_layer)
 
     def generate_temporary_raster(self, age):
         """

@@ -22,6 +22,10 @@ class LinesSelections():
     INPUT_FILE_PATH = "input_files.txt"
     plate_model_path = base_tools.get_layer_path("Plate Model")
     plate_model_layer = QgsVectorLayer(plate_model_path, "Plate Model", 'ogr')
+    plate_polygons_path = base_tools.get_layer_path("Plate Polygons")
+    plate_polygons_layer = QgsVectorLayer(plate_polygons_path, "Plate Polygons", 'ogr')
+    continent_polygons_path = base_tools.get_layer_path("Continent Polygons")
+    continent_polygons_layer = QgsVectorLayer(continent_polygons_path, "Continent Polygons", 'ogr')
     output_folder_path = base_tools.get_layer_path("Output Folder")
     APPEARANCE = "APPEARANCE"
     POSITION = "POSITION"
@@ -32,6 +36,106 @@ class LinesSelections():
         pass
 
     def select_lines(self,age):
+        #Initial steps: plate anc continent polygons preparation
+        plate_filter = (
+            f"{self.APPEARANCE} = {age}"
+        )
+        plate_features = list(
+            self.plate_polygons_layer.getFeatures(QgsFeatureRequest().setFilterExpression(plate_filter))
+        )
+
+        if len(plate_features) == 0:
+            QgsMessageLog.logMessage("No features found for the selected age, skipped.",
+                                     "Create Node Grid",
+                                     Qgis.Info)
+            return
+        multipolygon_coords = []
+        for feature in plate_features:
+            if feature.geometry().isMultipart():
+                geom = feature.geometry().asMultiPolygon()
+                for part in geom:
+                    polygon_coords = []
+                    for vertex in part[0]:
+                        x_coord = vertex.x()
+                        y_coord = vertex.y()
+                        coords = [x_coord, y_coord]
+                        polygon_coords.append(coords)
+                    if polygon_coords[0] != polygon_coords[-1]:
+                        polygon_coords.append(polygon_coords[0])
+                    multipolygon_coords.append(polygon_coords)
+
+            else:
+                if feature.geometry().isEmpty():
+                    pass
+                else:
+                    geom = feature.geometry().asPolygon()
+                    polygon_coords = []
+                    for vertex in geom:
+                        x_coord = vertex.x()
+                        y_coord = vertex.y()
+                        coords = [x_coord, y_coord]
+                        polygon_coords.append(coords)
+                    if polygon_coords[0] != polygon_coords[-1]:
+                        polygon_coords.append(polygon_coords[0])
+                    multipolygon_coords.append(polygon_coords)
+        multi_polygon_feature = [{
+            "type": "Feature",
+            "properties": {
+                "TYPE": "Plates"
+            },
+            "geometry": {
+                "type": "MultiPolygon",
+                "coordinates": [multipolygon_coords]
+            }
+        }]
+        # Write all aggregated multipolygon features to the output GeoJSON file
+        plate_multipolygons_path = os.path.join(self.output_folder_path,
+                                                f"plates_multipolygons_{int(age)}.geojson")
+        with open(plate_multipolygons_path, 'w') as output_file:
+            output_file.write(json.dumps({
+                "type": "FeatureCollection",
+                "features": multi_polygon_feature
+            }, indent=2))
+
+
+        agg_cont_polygon_layer = QgsVectorLayer("Polygon?crs=EPSG:4326",
+                                                "Aggregated Continent Polygon",
+                                                "memory")
+        agg_cont_polygon_provider = agg_cont_polygon_layer.dataProvider()
+        continent_filter = (
+            f"{self.APPEARANCE} = {age}"
+        )
+        continent_features = list(
+            self.continent_polygons_layer.getFeatures(QgsFeatureRequest().setFilterExpression(continent_filter))
+        )
+        QgsMessageLog.logMessage(f"For age {age}, COB has {len(continent_features)}")
+        if len(continent_features) == 0:
+            QgsMessageLog.logMessage("No features found for the selected age, skipped.",
+                                     "Create Node Grid",
+                                     Qgis.Info)
+            return
+        union_polygon = None
+        for feature in continent_features:
+            geom = feature.geometry()
+            if union_polygon is None:
+                union_polygon = geom
+            else:
+                union_polygon.combine(geom)
+        new_feature = QgsFeature()
+        new_feature.setGeometry(union_polygon)
+        agg_cont_polygon_provider.addFeature(new_feature)
+        agg_cont_polygon_layer.commitChanges()
+
+        # Define output layer path
+        output_layer_path = os.path.join(self.output_folder_path,
+                                         f"continent_polygons_age_{int(age)}.geojson")
+
+        # Save the layer as GeoJSON
+        QgsVectorFileWriter.writeAsVectorFormat(agg_cont_polygon_layer,
+                                                output_layer_path,
+                                                "utf-8",
+                                                agg_cont_polygon_layer.crs(),
+                                                "GeoJSON")
         #01: RID
         RID_filter = ( f"{self.APPEARANCE} = {age} AND " f"({self.TYPE} = 'Ridge')")
         RID_features = list(self.plate_model_layer.getFeatures(QgsFeatureRequest().setFilterExpression(RID_filter)))

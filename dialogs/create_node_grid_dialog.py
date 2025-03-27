@@ -1,10 +1,9 @@
 import os
 import time
-import traceback
 from qgis.PyQt import uic,QtWidgets
+from PyQt5.QtWidgets import QApplication
 from qgis.core import Qgis, QgsMessageLog, QgsVectorLayer, edit
-from qgis.PyQt.QtCore import QObject, pyqtSignal, pyqtSlot, QVariant, QThread
-
+from PyQt5.QtCore import QObject, QThreadPool, QRunnable, pyqtSignal
 from ..functions.createnodegrid.data_preparation import DataPreparation
 data_preparation = DataPreparation()
 
@@ -48,58 +47,78 @@ FORM_CLASS, _ = uic.loadUiType(os.path.join(
     os.path.dirname(__file__), 'create_node_grid_dialog.ui'))
 
 
-class ThreadedWorker(QObject):
-    finished = pyqtSignal()  # Signal emitted when the worker finishes
-    progress = pyqtSignal()  # Signal emitted with function name upon progress
-    error = pyqtSignal(str)  # Signal emitted when an error occurs
+class WorkerSignals(QObject):
+    """Signal-emitting object for the threaded worker."""
+    finished = pyqtSignal()
+    error = pyqtSignal(str)
+    progress = pyqtSignal()
 
-    def __init__(self, func, age):
+
+class ThreadedWorker(QRunnable):
+    """Worker that runs a function in a separate thread."""
+
+    def __init__(self, func, age, progress_enabled=True):
         super().__init__()
         self.func = func
         self.age = age
+        self.progress_enabled = progress_enabled
+        self.signals = WorkerSignals()
 
-    def process(self):
+    def run(self):
         try:
             self.func(age=self.age)
-            self.progress.emit()  # Emit progress signal
+            if self.progress_enabled:
+                self.signals.progress.emit()
         except Exception as e:
-            self.error.emit(f"{self.func.__name__}: {e}")
-        else:
-            self.finished.emit()
+            self.signals.error.emit(f"{self.func.__name__}: {e}")
+        finally:
+            self.signals.finished.emit()
 
 
 class CreateNodeGridDialog(QtWidgets.QDialog, FORM_CLASS):
     output_folder_path = base_tools.get_layer_path("Output Folder")
+
     def __init__(self, PM_age_list, PP_age_list, CP_age_list, input_fc):
         """Constructor.
-        Sets up workers, threads, ages, progress bar and connects buttons
+        Sets up workers, threads, ages, progress bar, and connects buttons
         with respective functions.
         """
         super(CreateNodeGridDialog, self).__init__()
         self.setupUi(self)
+
+        # Initialize attributes
         self.worker = None
         self.threads = []
-        self.age_listWidget.clear()
-        self.age_listWidget.setSelectionMode(QtWidgets.QAbstractItemView.MultiSelection)
+        self.errors = []
+        self.thread_pool = QThreadPool.globalInstance()
         self.PM_age_list = PM_age_list
         self.PP_age_list = PP_age_list
         self.CP_age_list = CP_age_list
         self.input_fc = input_fc
+
+        # Set up UI components
+        self.age_listWidget.clear()
+        self.age_listWidget.setSelectionMode(QtWidgets.QAbstractItemView.MultiSelection)
         self.progressBar.setValue(0)
+
+        # Connect buttons to methods
         self.Action_CreateAllAgeList_pushButton.clicked.connect(self.create_all_age_list)
         self.Action_PrepareData_pushButton.clicked.connect(self.prepare_data)
         self.Action_FeatureConversion_pushButton.clicked.connect(self.convert_features)
         self.Action_CleanNodes_pushButton.clicked.connect(self.clean_nodes)
         self.Action_MergeNodes_pushButton.clicked.connect(self.merge_all_nodes)
+        self.Action_ProcessEverything_pushButton.clicked.connect(self.process_everything)
 
     def create_all_age_list(self):
         """
-        Creates the selectable ages that are common to the plate model, plate polygons
-        and continents polygons. Displays ages with their respective chronostratigraphic
-        age names.
+        Creates the selectable ages that are common to the plate model,
+        plate polygons, and continents polygons. Displays ages with
+        their respective chronostratigraphic age names.
         """
         try:
             self.age_listWidget.clear()
+
+            # If any age list is None, read from file
             if self.PM_age_list is None or self.PP_age_list is None or self.CP_age_list is None:
                 file_path = "pStrAge_values.txt"
                 if os.path.exists(file_path):
@@ -108,28 +127,31 @@ class CreateNodeGridDialog(QtWidgets.QDialog, FORM_CLASS):
                 else:
                     return
             else:
-                pm_set = set(self.PM_age_list)
-                pp_set = set(self.PP_age_list)
-                cp_set = set(self.CP_age_list)
+                pm_set = set(self.PM_age_list or [])
+                pp_set = set(self.PP_age_list or [])
+                cp_set = set(self.CP_age_list or [])
                 all_age_list = sorted(list(pm_set.intersection(pp_set, cp_set)))
+
             if not all_age_list:
                 return
+
+            # Save ages to file and populate UI
             with open("pStrAge_values.txt", "w") as file:
                 for i, age_value in enumerate(all_age_list, start=1):
                     pStrAge = f"{age_value} Ma - [ {base_tools.get_relative_age(age_value)} ]"
                     self.age_listWidget.addItem(pStrAge)
                     file.write(pStrAge + "\n")
+
             return all_age_list
+
         except Exception as e:
-            QgsMessageLog.logMessage(f"Error creating all age list: {str(e)}", "Create Node Grid", Qgis.Critical)
+            QgsMessageLog.logMessage(f"Error creating age list: {str(e)}", "Create Node Grid", Qgis.Critical)
             raise
 
     def prepare_data(self):
-        """
-        Prepares data before features conversion.
-        """
+        """Prepares data before feature conversion."""
         self.progressBar.setValue(0)
-        self.total_steps = 2  # Total steps in the process
+        self.total_steps = 2
         self.completed_steps = 0
         selected_items = self.age_listWidget.selectedItems()
         age_values = [float(item.text().split()[0]) for item in selected_items]
@@ -137,53 +159,80 @@ class CreateNodeGridDialog(QtWidgets.QDialog, FORM_CLASS):
             data_preparation.aggregate_plate_polygons_new(age)
             data_preparation.aggregate_continent_polygons(age)
 
-
     def convert_features(self):
-        """
-        Start feature conversion for the first selected age and ensure sequential processing.
-        """
+        """Start feature conversion, ensuring sequential execution."""
         self.progressBar.setValue(0)
-        self.total_steps = 15
         self.completed_steps = 0
         self.start_time = time.time()
 
-        # Get selected ages
         selected_items = self.age_listWidget.selectedItems()
         self.age_values = [float(item.text().split()[0]) for item in selected_items]
-        self.total_steps = 15 * len(self.age_values) # 15 steps per reconstruction
+        self.total_steps = 15 * len(self.age_values)
 
         if not self.age_values:
             QtWidgets.QMessageBox.warning(self, "No Selection", "Please select at least one age.")
             return
 
-        self.current_age_index = 0  # Track which age we're processing
-        self.process_next_age()  # Start the first age
+        self.current_age_index = 0
+        self.process_next_age()
 
     def process_next_age(self):
-        """
-        Process the next age in the list after the previous one completes.
-        """
+        """Process the next age, ensuring completion before moving to the next."""
         if self.current_age_index >= len(self.age_values):
-            QgsMessageLog.logMessage("All ages processed.", "Processing", Qgis.Info)
-            self.write_elapsed_time()  # Log final time
+            self.write_elapsed_time()
             return
 
         age = self.age_values[self.current_age_index]
-        self.threads = []  # Reset threads for this age
-        self.remaining_threads = 0  # Track active threads
+        QgsMessageLog.logMessage(f"Processing age {age}", "Processing", Qgis.Info)
+        self.run_initial_processing(age)
+        self.start_threads(age)
 
-        QgsMessageLog.logMessage(f"Starting processing for age {age}", "Processing", Qgis.Info)
+    def run_initial_processing(self, age):
+        self.remaining_threads = 1
+        worker = ThreadedWorker(lines_selections.select_lines, age, progress_enabled=True)
+        worker.signals.finished.connect(self.thread_finished)
+        worker.signals.error.connect(self.thread_error)
+        worker.signals.progress.connect(self.update_progress_bar)
+        self.threads.append(worker)
+        QThreadPool.globalInstance().start(worker)
 
-        # Run initial processing functions
-        lines_selections.select_lines(age=age)
-        self.update_progress_bar()
-        rid_conversion.ridge_to_nodes(age=age)
-        self.update_progress_bar()
-        iso_conversion.isochron_to_nodes(age=age)
-        self.update_progress_bar()
-        raster_tools.generate_temporary_raster_plate_by_plate(age)
-        self.update_progress_bar()
+        while QThreadPool.globalInstance().activeThreadCount() > 0:
+            QApplication.processEvents()
+        self.remaining_threads = 1
+        worker = ThreadedWorker(rid_conversion.ridge_to_nodes, age, progress_enabled=True)
+        worker.signals.finished.connect(self.thread_finished)
+        worker.signals.error.connect(self.thread_error)
+        worker.signals.progress.connect(self.update_progress_bar)
+        self.threads.append(worker)
+        QThreadPool.globalInstance().start(worker)
 
+        while QThreadPool.globalInstance().activeThreadCount() > 0:
+            QApplication.processEvents()
+        self.remaining_threads = 1
+        worker = ThreadedWorker(iso_conversion.isochron_to_nodes, age, progress_enabled=True)
+        worker.signals.finished.connect(self.thread_finished)
+        worker.signals.error.connect(self.thread_error)
+        worker.signals.progress.connect(self.update_progress_bar)
+        self.threads.append(worker)
+        QThreadPool.globalInstance().start(worker)
+        self.remaining_threads = 1
+        while QThreadPool.globalInstance().activeThreadCount() > 0:
+            QApplication.processEvents()
+        self.remaining_threads = 1
+        worker = ThreadedWorker(raster_tools.generate_temporary_raster_plate_by_plate, age, progress_enabled=True)
+        worker.signals.finished.connect(self.thread_finished)
+        worker.signals.progress.connect(self.update_progress_bar)
+        worker.signals.error.connect(self.thread_error)
+        self.threads.append(worker)
+        QThreadPool.globalInstance().start(worker)
+
+        while QThreadPool.globalInstance().activeThreadCount() > 0:
+            QApplication.processEvents()
+
+
+
+    def start_threads(self, age):
+        """Start threaded processing after initial functions complete."""
         functions = [
             lws_conversion.lower_subduction_to_nodes,
             aba_conversion.abandoned_arc_to_nodes,
@@ -198,169 +247,157 @@ class CreateNodeGridDialog(QtWidgets.QDialog, FORM_CLASS):
             hot_spot_conversion.hot_spot_to_nodes,
         ]
 
-        self.start_threads(age, functions)
-        QgsMessageLog.logMessage("Threads started successfully!", "Debug")
+        self.remaining_threads = len(functions)
+        for func in functions:
+            worker = ThreadedWorker(func, age, progress_enabled=True)
+            worker.signals.finished.connect(self.thread_finished)
+            worker.signals.error.connect(self.thread_error)
+            worker.signals.progress.connect(self.update_progress_bar)
+            self.threads.append(worker)
+            QThreadPool.globalInstance().start(worker)
+
+
+    def thread_finished(self):
+        """Check if all threads are done before moving to the next age."""
+        self.remaining_threads -= 1
+        if self.remaining_threads == 0:
+            self.current_age_index += 1
+            self.process_next_age()
 
     def update_progress_bar(self):
-        """
-        Increment the progress bar by one step.
-        """
+        """Update progress bar."""
         self.completed_steps += 1
         percentage = (self.completed_steps / self.total_steps) * 100
         self.progressBar.setValue(int(percentage))
 
-    def start_threads(self, age, functions):
-        """
-        Start threads for feature conversion tasks and ensure they all complete before processing the next age.
-        """
-        QgsMessageLog.logMessage(f"Starting threads for age {age}...", "Processing", Qgis.Info)
-
-        self.remaining_threads = len(functions)  # Track active threads
-
-        for func in functions:
-            try:
-                thread = QThread()
-                worker = ThreadedWorker(func, age)
-
-                worker.moveToThread(thread)
-
-                # Connect signals
-                worker.finished.connect(self.thread_finished)
-                worker.error.connect(self.thread_error)
-                worker.progress.connect(self.update_progress_bar)
-                thread.started.connect(worker.process)
-
-                self.threads.append((thread, worker))
-                thread.start()
-
-            except Exception as e:
-                QgsMessageLog.logMessage(f"Error initializing thread for {func.__name__}: {str(e)}", "Processing",
-                                         Qgis.Critical)
-
-    def thread_finished(self):
-        """
-        Called when a thread finishes. If all threads are done, start the next age.
-        """
-        self.remaining_threads -= 1  # Reduce active thread count
-
-        if self.remaining_threads == 0:  # If all threads for this age are done
-            QgsMessageLog.logMessage(f"All threads finished for age {self.age_values[self.current_age_index]}.",
-                                     "Processing", Qgis.Info)
-
-            #CLEAN UP THREADS BEFORE MOVING TO THE NEXT AGE
-            self.cleanup_threads()
-
-            # Move to the next age
-            self.current_age_index += 1
-            self.process_next_age()  # Start processing next age
-
-    def check_thread_completion(self):
-        """
-        Check if all threads are completed.
-        """
-        if all(not thread.isRunning() for thread, _ in self.threads):
-            self.cleanup_threads()
-            self.write_elapsed_time()
-
-    def log_thread_completion(self, func_name):
-        """
-        Log and write to file when a thread completes.
-        """
-        elapsed_time = time.time() - self.start_time
-        try:
-            # Write the completion time for the specific function
-            with open("time.txt", "a") as file:
-                file.write(f"Function {func_name} completed. Elapsed time: {elapsed_time:.2f} seconds\n")
-
-            # Log progress in the QGIS Message Log
-            QgsMessageLog.logMessage(
-                f"Function {func_name} completed successfully. Elapsed time: {elapsed_time:.2f} seconds.",
-                "Processing",
-                Qgis.Info,
-            )
-        except Exception as e:
-            QgsMessageLog.logMessage(
-                f"Error logging progress for {func_name}: {str(e)}",
-                "Processing",
-                Qgis.Critical,
-            )
+    def thread_error(self, error_message):
+        """Handle thread errors."""
+        QgsMessageLog.logMessage(f"Thread error: {error_message}", "Processing", Qgis.Critical)
+        self.errors.append(error_message)
 
     def write_elapsed_time(self):
-        """
-        Logs and displays the total elapsed time.
-        """
-        try:
-            end_time = time.time()
-            elapsed_time = end_time - self.start_time
+        """Write elapsed time and log errors if any."""
+        elapsed_time = time.time() - self.start_time
+        with open("time.txt", "a") as file:
+            for age in self.age_values:
+                file.write(f"Age {age} - Elapsed time: {elapsed_time:.2f} seconds\n")
 
-            # Write the total time to the file
-            with open("time.txt", "a") as file:
-                for age in self.age_values:
-                    file.write(f"With threads and for age {age}, elapsed time is {elapsed_time:.2f} seconds\n")
+        if self.errors:
+            with open("errors.log", "a") as err_file:
+                err_file.write("\n".join(self.errors) + "\n")
+            QgsMessageLog.logMessage("Errors occurred during processing. See errors.log", "Processing", Qgis.Warning)
 
-            # Log success in the QGIS Message Log
-            QgsMessageLog.logMessage(
-                f"Processing completed successfully. Total elapsed time: {elapsed_time:.2f} seconds.",
-                "Processing",
-                Qgis.Info,
-            )
-
-            # Show success message box
-            QtWidgets.QMessageBox.information(
-                self,
-                "Processing Complete",
-                f"All processing completed successfully.\nTotal elapsed time: {elapsed_time:.2f} seconds.",
-                QtWidgets.QMessageBox.Ok,
-            )
-        except Exception as e:
-            QgsMessageLog.logMessage(
-                f"Error writing elapsed time or showing completion message: {str(e)}",
-                "Processing",
-                Qgis.Critical,
-            )
-            QtWidgets.QMessageBox.critical(
-                self,
-                "Error",
-                f"An error occurred while writing elapsed time or displaying the message:\n{str(e)}",
-            )
-
-    def thread_error(self, error_message):
-        """
-        Handle thread errors and log them.
-        """
-        QgsMessageLog.logMessage(f"Thread error: {error_message}", "Processing", Qgis.Critical)
-        QtWidgets.QMessageBox.critical(self, "Error", f"Thread error:\n{error_message}")
-        self.cleanup_threads()
-
-    def cleanup_threads(self):
-        """
-        Properly clean up all threads before starting a new age.
-        """
-        for thread, worker in self.threads:
-            worker.deleteLater()  # Delete worker object
-            thread.quit()  # Ask the thread to quit
-            thread.wait()  # Wait for thread to fully stop
-            thread.deleteLater()  # Delete thread object
-
-        self.threads = []  # Reset thread list
+        #QtWidgets.QMessageBox.information(self, "Processing Complete",f"All processing completed successfully.\nTotal elapsed time: {elapsed_time:.2f} seconds.")
 
     def merge_all_nodes(self):
         """
-        Merges all nodes from the various settings into a single all nodes
-        layer.
+        Merges all nodes from the various settings into a single all nodes layer.
+        Runs in separate threads for each selected age.
         """
         selected_items = self.age_listWidget.selectedItems()
-        age_values = [float(item.text().split()[0]) for item in selected_items]
-        for age in age_values:
-           feature_conversion_tools.create_final_nodes(age)
+        self.age_values = [float(item.text().split()[0]) for item in selected_items]
+
+        if not self.age_values:
+            QtWidgets.QMessageBox.warning(self, "No Selection", "Please select at least one age.")
+            return
+
+        self.remaining_threads = len(self.age_values)
+        self.current_age_index = 0  # Initialize current_age_index here
+
+        self.start_time = time.time()
+
+        # First set of threads for create_final_nodes
+        for age in self.age_values:
+            worker = ThreadedWorker(feature_conversion_tools.create_final_nodes, age, progress_enabled=True)
+            worker.signals.finished.connect(self.thread_finished)
+            worker.signals.error.connect(self.thread_error)
+            self.threads.append(worker)
+            QThreadPool.globalInstance().start(worker)
 
     def clean_nodes(self):
         """
         Cleans the all nodes layer to remove nodes from different settings to
         remove incoherent (contradicting) nodes when interpolating.
         """
+
         selected_items = self.age_listWidget.selectedItems()
-        age_values = [float(item.text().split()[0]) for item in selected_items]
-        for age in age_values:
-            feature_conversion_tools.clean_nodes(age)
-            feature_conversion_tools.clean_nodes_hot_polygon(age)
+        self.age_values = [float(item.text().split()[0]) for item in selected_items]
+
+        if not self.age_values:
+            QtWidgets.QMessageBox.warning(self, "No Selection", "Please select at least one age.")
+            return
+
+        self.remaining_threads = len(self.age_values)
+        self.current_age_index = 0  # Initialize current_age_index here
+
+        self.start_time = time.time()
+
+        for age in self.age_values:
+            worker = ThreadedWorker(feature_conversion_tools.clean_nodes, age, progress_enabled=True)
+            worker.signals.finished.connect(self.thread_finished)
+            worker.signals.error.connect(self.thread_error)
+            self.threads.append(worker)
+            QThreadPool.globalInstance().start(worker)
+
+            while QThreadPool.globalInstance().activeThreadCount() > 0:
+                QApplication.processEvents()
+
+        for age in self.age_values:
+            worker = ThreadedWorker(feature_conversion_tools.clean_nodes_hot_polygon, age, progress_enabled=True)
+            worker.signals.finished.connect(self.thread_finished)
+            worker.signals.error.connect(self.thread_error)
+            self.threads.append(worker)
+            QThreadPool.globalInstance().start(worker)
+
+    def process_everything(self):
+        self.progressBar.setValue(0)
+        self.completed_steps = 0
+        self.start_time = time.time()
+
+        selected_items = self.age_listWidget.selectedItems()
+        self.age_values = [float(item.text().split()[0]) for item in selected_items]
+        self.total_steps = 18 * len(self.age_values)
+        if not self.age_values:
+            QtWidgets.QMessageBox.warning(self, "No Selection", "Please select at least one age.")
+            return
+        self.current_age_index = 0
+        self.process_next_age()
+
+        while QThreadPool.globalInstance().activeThreadCount() > 0:
+            QApplication.processEvents()
+
+        self.start_time = time.time()
+
+        for age in self.age_values:
+            worker = ThreadedWorker(feature_conversion_tools.create_final_nodes, age, progress_enabled=True)
+            worker.signals.finished.connect(self.thread_finished)
+            worker.signals.error.connect(self.thread_error)
+            worker.signals.progress.connect(self.update_progress_bar)
+            self.threads.append(worker)
+            QThreadPool.globalInstance().start(worker)
+            while QThreadPool.globalInstance().activeThreadCount() > 0:
+                QApplication.processEvents()
+
+        self.start_time = time.time()
+
+        for age in self.age_values:
+            worker = ThreadedWorker(feature_conversion_tools.clean_nodes, age, progress_enabled=True)
+            worker.signals.finished.connect(self.thread_finished)
+            worker.signals.error.connect(self.thread_error)
+            worker.signals.progress.connect(self.update_progress_bar)
+            self.threads.append(worker)
+            QThreadPool.globalInstance().start(worker)
+
+            while QThreadPool.globalInstance().activeThreadCount() > 0:
+                QApplication.processEvents()
+        self.start_time = time.time()
+
+        for age in self.age_values:
+            worker = ThreadedWorker(feature_conversion_tools.clean_nodes_hot_polygon, age, progress_enabled=True)
+            worker.signals.finished.connect(self.thread_finished)
+            worker.signals.error.connect(self.thread_error)
+            worker.signals.progress.connect(self.update_progress_bar)
+            self.threads.append(worker)
+            QThreadPool.globalInstance().start(worker)
+
+

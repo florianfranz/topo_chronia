@@ -6,20 +6,20 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>453</width>
-    <height>306</height>
+    <width>497</width>
+    <height>418</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>TopoChronia Phase I: Create Node Grid</string>
   </property>
-  <widget class="QWidget" name="">
+  <widget class="QWidget" name="layoutWidget">
    <property name="geometry">
     <rect>
      <x>20</x>
      <y>20</y>
-     <width>428</width>
-     <height>223</height>
+     <width>452</width>
+     <height>340</height>
     </rect>
    </property>
    <layout class="QVBoxLayout" name="verticalLayout_2">
@@ -72,6 +72,13 @@
          </widget>
         </item>
         <item>
+         <widget class="QPushButton" name="Action_ProcessEverything_pushButton">
+          <property name="text">
+           <string>Process All Steps</string>
+          </property>
+         </widget>
+        </item>
+        <item>
          <widget class="QDialogButtonBox" name="button_box">
           <property name="orientation">
            <enum>Qt::Horizontal</enum>
@@ -93,6 +100,19 @@
      </widget>
     </item>
    </layout>
+  </widget>
+  <widget class="QLabel" name="Status_Processing">
+   <property name="geometry">
+    <rect>
+     <x>20</x>
+     <y>370</y>
+     <width>450</width>
+     <height>41</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string/>
+   </property>
   </widget>
  </widget>
  <resources/>
