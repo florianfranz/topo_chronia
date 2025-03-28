@@ -66,6 +66,6 @@ class ISOConversion:
         with open(output_points_layer_path, 'w') as output_file:
             output_file.write(json.dumps({"type": "FeatureCollection","features": all_points_features}, indent=2))
         output_nodes_layer_path = os.path.join(self.output_folder_path, f"all_nodes_{int(age)}.geojson")
-        feature_conversion_tools.add_nodes(age,output_points_layer_path,first_build=False)
+        feature_conversion_tools.add_nodes(age,output_points_layer_path,output_nodes_layer_path,first_build=False)
         feature_conversion_tools.add_id_nodes_setting(age, "ISO")
         #feature_conversion_tools.add_layer_to_group(output_points_layer_path, f"{int(age)} Ma", "ISO")

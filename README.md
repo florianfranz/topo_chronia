@@ -31,6 +31,8 @@ to the present-day volume, in order to assess the difference of sea-level.
 
 TopoChronia runs as a QGIS plugin. It can be used on QGIS version 3.36 or higher, and was developed with Python 3.12.3.
 
+A complete documentation including a step-by-step tutorial is available at https://topo-chronia.readthedocs.io/en/latest/#
+
 To install the plugin:
 
 * Manual installation:
@@ -119,6 +121,83 @@ For more information about the PANALESIS model, please check out the following p
 Also, see more recent presentations about the PANALESIS transition to open-source and FAIR compliance:
 * Franziskakis, F. (2024, March 8). Reconstructing the Earth in Deep-Time: A New and Open Framework for the PANALESIS Model. European Geosciences Union (EGU) General Assembly 2024, Vienna, Austria. Zenodo. https://doi.org/10.5281/zenodo.13906863
 * Franziskakis, F. (2024, December 17). Quantified Palaeotopographic and Palaeogeographic Global Maps for the Phanerozoic using the PANALESIS Plate Tectonic Model. 22nd Swiss Geoscience Meeting, Basel, Switzerland. Zenodo. https://doi.org/10.5281/zenodo.14505269
+
+## Tests
+Automated tests can be done, once the plugin has been installed.
+Open the QGIS Python Console and type:
+```python
+import topo_chronia.tests.test_plugin as test_plugin
+```
+
+First, you can perform a basic test to check if the plugin can be called and write in the console:
+```python
+test_plugin.base_test()
+```
+
+The output should be:
+```
+TopoChronia correctly installed and functions can be called.
+```
+
+
+Second, a test can be done to load sample data (portion of the input data at 444 Ma)
+```python
+test_plugin.load_sample_data()
+```
+
+The output should be sample intput layers loaded in the Qgis Project
+![test_load_layers.png](test_load_layers.png)
+
+(Orange polygon = plate, purple polygon = continent-ocean boundary, pink lines = plate model, green dots = geodesic grid)
+
+Third, a full processing test is done to create the node grid based on the sample data.
+```python
+test_plugin.process_sample_data()
+```
+
+The output should be:
+```
+Processing Lines Selection...
+Lines Selection: Success!
+Processing Ridges...
+Ridges Processing: Success!
+Processing Isochrons...
+Isochrons Processing: Success!
+Processing Lower Subductions...
+Lower Subductions Processing: Success!
+Processing Abandoned Arcs...
+Abandoned Arcs Processing: Success!
+Processing Passive Margin Wedges...
+Passive Margin Wedges Processing: Success!
+Processing Continents...
+Continents Processing: Success!
+Processing Cratons...
+Cratons Processing: Success!
+Processing Other Margins...
+Other Margins Processing: Success!
+Processing Passive Margin Continents...
+Passive Margin Continents Processing: Success!
+Processing Rifts...
+Rifts Processing: Success!
+Processing Upper Subduction...
+Upper Subducitons Processing: Success!
+Processing Collisions...
+Collisions Processing: Success!
+Processing Hot-Spots...
+Hot-Spots Processing: Success!
+Merging Nodes...
+Nodes Merging: Success!
+Cleaning Nodes (1/2)...
+Nodes vs Nodes Cleaning: Success!
+Cleaning Nodes (2/2)...
+Nodes inside Hot-Spots Cleaning: Success!
+Adding cleaned nodes layer to map...
+```
+
+And you should see the nodes:
+![test_process_layers.png](test_process_layers.png)
+
+(Same symbology as above, with added new nodes in blue)
 
 ## Contributing
 

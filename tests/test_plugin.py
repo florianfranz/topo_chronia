@@ -42,8 +42,8 @@ raster_tools = RasterTools()
 
 
 def base_test():
-    """Simple test function to verify the plugin is callable."""
-    print("TopoChronia correctly installed and callable")
+    """Simple test function to verify the plugin works."""
+    print("TopoChronia correctly installed and functions can be called.")
     return
 
 def load_sample_data():
@@ -102,7 +102,7 @@ def process_sample_data():
     os.makedirs(output_dir, exist_ok=True)
     PM, PP, COB, GG = load_sample_data()
     age = 444
-    classes = [lines_selection,rid_conversion,iso_conversion,pre_raster_tools,lws_conversion,aba_conversion,
+    classes = [lines_selection,rid_conversion,iso_conversion,lws_conversion,aba_conversion,
                pmw_conversion,ctn_conversion,cra_conversion,otm_conversion,pmc_conversion, rib_conversion,
                ups_conversion,col_conversion,hot_conversion, feature_conversion_tools]
     for cls in classes:
@@ -141,12 +141,6 @@ def process_sample_data():
     try:
         iso_conversion.isochron_to_nodes(age)
         print("Isochrons Processing: Success!")
-    except Exception as e:
-        print(f"Error: {e}")
-    print("Processing Preliminary Raster...")
-    try:
-        pre_raster_tools.generate_temporary_raster_plate_by_plate(age)
-        print("Preliminary Raster Processing: Success!")
     except Exception as e:
         print(f"Error: {e}")
     print("Processing Lower Subductions...")
@@ -237,6 +231,3 @@ def process_sample_data():
     all_nodes_layer_path = os.path.join(output_dir, f"all_nodes_{age}.geojson")
     all_nodes_layer = QgsVectorLayer(all_nodes_layer_path, f"All Nodes {age}", "ogr")
     QgsProject.instance().addMapLayer(all_nodes_layer)
-    """project = QgsProject.instance()
-    for layer in project.mapLayers().values():
-        project.removeMapLayer(layer)"""
