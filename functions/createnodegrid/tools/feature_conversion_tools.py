@@ -737,7 +737,7 @@ class FeatureConversionTools:
         settings = ["RID", "ISO", "LWS", "ABA", "PMW", "CTN", "CRA", "OTM", "PMC", "RIB", "UPS", "COL", "HOT"]
         for setting in settings:
             nodes_layer_path = os.path.join(self.output_folder_path, f"{setting}_nodes_{int(age)}.geojson")
-            self.add_nodes(age, nodes_layer_path, first_build=False)
+            self.add_nodes(age, nodes_layer_path,all_nodes_layer_path, first_build=False)
             self.add_id_nodes(age)
             self.move_nodes_slightly(age)
 
@@ -763,11 +763,10 @@ class FeatureConversionTools:
                 nodes_layer.changeAttributeValue(feature.id(), field_idx_fl, 45771972)
         nodes_layer.commitChanges()
 
-    def add_nodes(self, age, points_layer_path, first_build = False):
+    def add_nodes(self, age, points_layer_path, output_nodes_layer_path, first_build = False):
         """Adds converted features to the nodes layer.
         If first build is True, only ridges and isochrons are added (initial
         creation with these two is needed for other features conversions)."""
-        output_nodes_layer_path = os.path.join(self.output_folder_path, f"all_nodes_{int(age)}.geojson")
         if first_build is True:
             all_nodes_features = []
             points_layer = QgsVectorLayer(points_layer_path, f"Points_{age}", "ogr")

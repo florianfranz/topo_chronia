@@ -23,6 +23,7 @@
  ***************************************************************************/
 """
 import os
+import sys
 import os.path
 import json
 
@@ -31,6 +32,8 @@ from qgis.PyQt.QtGui import QIcon
 from qgis.PyQt.QtWidgets import QAction, QFileDialog, QDialog
 from qgis.core import QgsProject, Qgis, QgsMessageLog
 from qgis.core import QgsLayerTreeLayer, QgsApplication
+
+import topo_chronia.dialogs
 
 from .dialogs.check_configuration_dialog import CheckConfigurationDialog
 from .dialogs.create_node_grid_dialog import CreateNodeGridDialog
