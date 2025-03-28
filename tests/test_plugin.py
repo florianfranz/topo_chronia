@@ -39,8 +39,6 @@ from functions.interpolatetoraster.tools.rasters_tools import RasterTools
 raster_tools = RasterTools()
 
 
-
-
 def base_test():
     """Simple test function to verify the plugin works."""
     print("TopoChronia correctly installed and functions can be called.")

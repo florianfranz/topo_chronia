@@ -148,7 +148,7 @@ test_plugin.load_sample_data()
 The output should be sample intput layers loaded in the Qgis Project
 ![test_load_layers.png](test_load_layers.png)
 
-(Orange polygon = plate, purple polygon = continent-ocean boundary, pink lines = plate model, green dots = geodesic grid)
+(Orange polygon = plate, purple polygon = continent-ocean boundary, red lines = plate model, green dots = geodesic grid)
 
 Third, a full processing test is done to create the node grid based on the sample data.
 ```python
@@ -195,6 +195,7 @@ Adding cleaned nodes layer to map...
 ```
 
 And you should see the nodes:
+
 ![test_process_layers.png](test_process_layers.png)
 
 (Same symbology as above, with added new nodes in blue)
@@ -222,6 +223,6 @@ You can view the full license text in the [LICENSE.txt](./LICENSE.txt).
 
 ## Funding
 
-We acknowledge financial support from the Swiss National Science Foundation (SNSF) under [Sinergia grant #213539](https://data.snf.ch/grants/grant/213539): Long-term 
+We acknowledge financial support from the Swiss National Science Foundation (SNSF) under [Sinergia grant #213539](https://data.snf.ch/grants/grant/213539): _Long-term 
 evolution of the Earth from the base of the mantle to the top of the atmosphere: Understanding the mechanisms leading to 
-‘greenhouse’ and ‘icehouse’ regimes.
+‘greenhouse’ and ‘icehouse’ regimes._
