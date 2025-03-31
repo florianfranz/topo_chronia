@@ -1,51 +1,14 @@
 import os
 import sys
+from qgis.utils import iface
 from qgis.core import Qgis, QgsVectorLayer, QgsProject, QgsApplication, QgsSettings, QgsMessageLog
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-from functions.createnodegrid.conversions.selections import LinesSelections
-lines_selection = LinesSelections()
-from functions.createnodegrid.conversions.ridge import RIDConversion
-rid_conversion = RIDConversion()
-from functions.createnodegrid.conversions.isochron import ISOConversion
-iso_conversion = ISOConversion()
-from functions.createnodegrid.conversions.abandoned_arc import ABAConversion
-aba_conversion = ABAConversion()
-from functions.createnodegrid.conversions.lower_subduction import LWSConversion
-lws_conversion = LWSConversion()
-from functions.createnodegrid.conversions.continent import CTNConversion
-ctn_conversion = CTNConversion()
-from functions.createnodegrid.conversions.passive_margin_wedge import PMWConversion
-pmw_conversion = PMWConversion()
-from functions.createnodegrid.conversions.passive_margin_continent import PMCConversion
-pmc_conversion = PMCConversion()
-from functions.createnodegrid.conversions.upper_subduction import UPSConversion
-ups_conversion = UPSConversion()
-from functions.createnodegrid.tools.rasters import PreRasterTools
-pre_raster_tools = PreRasterTools()
-from functions.createnodegrid.conversions.craton import CRAConversion
-cra_conversion = CRAConversion()
-from functions.createnodegrid.conversions.hot_spot import HOTConversion
-hot_conversion = HOTConversion()
-from functions.createnodegrid.conversions.collision import COLConversion
-col_conversion = COLConversion()
-from functions.createnodegrid.conversions.rift import RIBConversion
-rib_conversion = RIBConversion()
-from functions.createnodegrid.conversions.other_margin import OTMConversion
-otm_conversion = OTMConversion()
-from functions.createnodegrid.tools.feature_conversion_tools import FeatureConversionTools
-feature_conversion_tools = FeatureConversionTools()
-from functions.interpolatetoraster.tools.rasters_tools import RasterTools
-raster_tools = RasterTools()
-
-
 def base_test():
-    """Simple test function to verify the plugin works."""
     print("TopoChronia correctly installed and functions can be called.")
     return
 
 def load_sample_data():
-    """Test to load data into the project"""
     plugin_tests_dir = os.path.dirname(os.path.abspath(__file__))
 
     PM_layer_path = os.path.join(plugin_tests_dir, 'data', 'PM_444_sample.shp')
@@ -100,6 +63,39 @@ def process_sample_data():
     os.makedirs(output_dir, exist_ok=True)
     PM, PP, COB, GG = load_sample_data()
     age = 444
+
+    from functions.createnodegrid.conversions.selections import LinesSelections
+    lines_selection = LinesSelections()
+    from functions.createnodegrid.conversions.ridge import RIDConversion
+    rid_conversion = RIDConversion()
+    from functions.createnodegrid.conversions.isochron import ISOConversion
+    iso_conversion = ISOConversion()
+    from functions.createnodegrid.conversions.abandoned_arc import ABAConversion
+    aba_conversion = ABAConversion()
+    from functions.createnodegrid.conversions.lower_subduction import LWSConversion
+    lws_conversion = LWSConversion()
+    from functions.createnodegrid.conversions.continent import CTNConversion
+    ctn_conversion = CTNConversion()
+    from functions.createnodegrid.conversions.passive_margin_wedge import PMWConversion
+    pmw_conversion = PMWConversion()
+    from functions.createnodegrid.conversions.passive_margin_continent import PMCConversion
+    pmc_conversion = PMCConversion()
+    from functions.createnodegrid.conversions.upper_subduction import UPSConversion
+    ups_conversion = UPSConversion()
+    from functions.createnodegrid.conversions.craton import CRAConversion
+    cra_conversion = CRAConversion()
+    from functions.createnodegrid.conversions.hot_spot import HOTConversion
+    hot_conversion = HOTConversion()
+    from functions.createnodegrid.conversions.collision import COLConversion
+    col_conversion = COLConversion()
+    from functions.createnodegrid.conversions.rift import RIBConversion
+    rib_conversion = RIBConversion()
+    from functions.createnodegrid.conversions.other_margin import OTMConversion
+    otm_conversion = OTMConversion()
+    from functions.createnodegrid.tools.feature_conversion_tools import FeatureConversionTools
+    feature_conversion_tools = FeatureConversionTools()
+
+
     classes = [lines_selection,rid_conversion,iso_conversion,lws_conversion,aba_conversion,
                pmw_conversion,ctn_conversion,cra_conversion,otm_conversion,pmc_conversion, rib_conversion,
                ups_conversion,col_conversion,hot_conversion, feature_conversion_tools]
@@ -229,3 +225,6 @@ def process_sample_data():
     all_nodes_layer_path = os.path.join(output_dir, f"all_nodes_{age}.geojson")
     all_nodes_layer = QgsVectorLayer(all_nodes_layer_path, f"All Nodes {age}", "ogr")
     QgsProject.instance().addMapLayer(all_nodes_layer)
+
+def clear_console():
+    iface.mainWindow().reloadPythonConsole()

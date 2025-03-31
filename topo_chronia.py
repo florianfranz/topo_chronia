@@ -183,6 +183,11 @@ class TopoChronia:
                 action)
             self.iface.removeToolBarIcon(action)
 
+        # Find and delete all topo_chronia modules
+        plugin_modules = [m for m in sys.modules if m.startswith("topo_chronia")]
+        for module in plugin_modules:
+            del sys.modules[module]
+
     def get_selected_layer(self, tab_index):
         """Gets the selected layer based on the current combo box index."""
         if self.layers is None:
