@@ -4,8 +4,7 @@ from qgis.PyQt import uic,QtWidgets
 from PyQt5.QtWidgets import QApplication
 from qgis.core import Qgis, QgsMessageLog, QgsVectorLayer, edit
 from PyQt5.QtCore import QObject, QThreadPool, QRunnable, pyqtSignal
-from ..functions.createnodegrid.data_preparation import DataPreparation
-data_preparation = DataPreparation()
+
 
 from ..functions.base_tools import BaseTools
 base_tools = BaseTools()
@@ -103,7 +102,6 @@ class CreateNodeGridDialog(QtWidgets.QDialog, FORM_CLASS):
 
         # Connect buttons to methods
         self.Action_CreateAllAgeList_pushButton.clicked.connect(self.create_all_age_list)
-        self.Action_PrepareData_pushButton.clicked.connect(self.prepare_data)
         self.Action_FeatureConversion_pushButton.clicked.connect(self.convert_features)
         self.Action_CleanNodes_pushButton.clicked.connect(self.clean_nodes)
         self.Action_MergeNodes_pushButton.clicked.connect(self.merge_all_nodes)
@@ -147,17 +145,6 @@ class CreateNodeGridDialog(QtWidgets.QDialog, FORM_CLASS):
         except Exception as e:
             QgsMessageLog.logMessage(f"Error creating age list: {str(e)}", "Create Node Grid", Qgis.Critical)
             raise
-
-    def prepare_data(self):
-        """Prepares data before feature conversion."""
-        self.progressBar.setValue(0)
-        self.total_steps = 2
-        self.completed_steps = 0
-        selected_items = self.age_listWidget.selectedItems()
-        age_values = [float(item.text().split()[0]) for item in selected_items]
-        for age in age_values:
-            data_preparation.aggregate_plate_polygons_new(age)
-            data_preparation.aggregate_continent_polygons(age)
 
     def convert_features(self):
         """Start feature conversion, ensuring sequential execution."""

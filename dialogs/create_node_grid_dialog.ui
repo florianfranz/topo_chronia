@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>497</width>
-    <height>418</height>
+    <height>372</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -40,13 +40,6 @@
          <widget class="QPushButton" name="Action_CreateAllAgeList_pushButton">
           <property name="text">
            <string>Create Age List</string>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="QPushButton" name="Action_PrepareData_pushButton">
-          <property name="text">
-           <string>Prepare Data</string>
           </property>
          </widget>
         </item>
@@ -100,19 +93,6 @@
      </widget>
     </item>
    </layout>
-  </widget>
-  <widget class="QLabel" name="Status_Processing">
-   <property name="geometry">
-    <rect>
-     <x>20</x>
-     <y>370</y>
-     <width>450</width>
-     <height>41</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string/>
-   </property>
   </widget>
  </widget>
  <resources/>
