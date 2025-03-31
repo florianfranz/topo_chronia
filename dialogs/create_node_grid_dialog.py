@@ -215,19 +215,10 @@ class CreateNodeGridDialog(QtWidgets.QDialog, FORM_CLASS):
         worker.signals.progress.connect(self.update_progress_bar)
         self.threads.append(worker)
         QThreadPool.globalInstance().start(worker)
-        self.remaining_threads = 1
         while QThreadPool.globalInstance().activeThreadCount() > 0:
             QApplication.processEvents()
-        self.remaining_threads = 1
-        worker = ThreadedWorker(raster_tools.generate_temporary_raster_plate_by_plate, age, progress_enabled=True)
-        worker.signals.finished.connect(self.thread_finished)
-        worker.signals.progress.connect(self.update_progress_bar)
-        worker.signals.error.connect(self.thread_error)
-        self.threads.append(worker)
-        QThreadPool.globalInstance().start(worker)
-
-        while QThreadPool.globalInstance().activeThreadCount() > 0:
-            QApplication.processEvents()
+        raster_tools.generate_temporary_raster_plate_by_plate(age)
+        self.update_progress_bar()
 
 
 
