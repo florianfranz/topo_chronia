@@ -31,7 +31,9 @@ class PreRasterTools:
         attributes = nodes_layer.fields().toList()
 
         plate_filter = f"{self.APPEARANCE} = {age}"
-        for plate in self.plate_polygons_layer.getFeatures(QgsFeatureRequest().setFilterExpression(plate_filter)):
+        plate_features = list(
+            self.plate_polygons_layer.getFeatures(QgsFeatureRequest().setFilterExpression(plate_filter)))
+        for plate in plate_features:
             plate_name_or = plate.attribute("PLATE")
 
             # Rename specific plates
@@ -52,6 +54,7 @@ class PreRasterTools:
 
             plate_name = plate_name_mappings.get(plate_name_or,
                                                  plate_name_or.upper())  # Default to uppercase if not mapped
+
 
             bbox = plate.geometry().boundingBox()
 
@@ -77,11 +80,13 @@ class PreRasterTools:
                 provider.addAttributes(attributes)
                 provider.addFeatures(nodes_features)
                 plate_nodes_layer.commitChanges()
+                QgsProject.instance().addMapLayer(plate_nodes_layer)
 
                 self.perform_prelim_raster_interpolation_plate_by_plate(plate_nodes_layer,
                                                                         plate_name_or,
                                                                         bbox,
                                                                         age)
+                QgsProject.instance().removeMapLayer(plate_nodes_layer)
 
         age_output_folder = os.path.join(self.output_folder_path, str(int(age)))
         self.create_mosaic_from_rasters(age_output_folder,age)
@@ -116,8 +121,6 @@ class PreRasterTools:
             'OUTPUT': mosaic_output_path
         })
 
-        QgsMessageLog.logMessage(f"Mosaic created at {mosaic_output_path}", "Create Node Grid", Qgis.Info)
-
         processing.run("gdal:fillnodata", {
             'INPUT': mosaic_output_path,
             'BAND': 1,
@@ -135,30 +138,26 @@ class PreRasterTools:
         """
         Performs a TIN interpolation and fills no data cells for the preliminary raster.
         """
-
+        plate_nodes_layer_source = plate_nodes_layer.source()
+        interpolation_data = f"{plate_nodes_layer_source}::~::0::~::3::~::0"
+        QgsMessageLog.logMessage(f"interpolation_data: {interpolation_data}")
         # Define the output folder structure: output/age/plate_name
         age_output_folder = os.path.join(self.output_folder_path, str(int(age)))  # Convert age to string
         plate_output_folder = os.path.join(age_output_folder, plate_name)
-
+        QgsMessageLog.logMessage(f"plate extent: {plate_extent} ")
         # Create the folders if they don’t exist
         os.makedirs(plate_output_folder, exist_ok=True)
 
         qgis_tin_raster_path = os.path.join(plate_output_folder, f"qgis_tin_prelim_{int(age)}.tif")
 
-        try:
-            processing.run("qgis:tininterpolation", {
-                'INTERPOLATION_DATA': f"{plate_nodes_layer.source()}::~::0::~::3::~::0",
-                'METHOD': 0,
-                'EXTENT': plate_extent,
-                'PIXEL_SIZE': 0.1,
-                'OUTPUT': qgis_tin_raster_path,
-            })
-        except QgsProcessingException as e:
-            QgsMessageLog.logMessage(f"QGIS Processing error: {e} with plate {plate_name}", "Interpolation", Qgis.Info)
-            return
-        except Exception as e:
-            QgsMessageLog.logMessage(f"Unexpected error: {e} with plate {plate_name}", "Interpolation", Qgis.Info)
-            return
+        processing.run("qgis:tininterpolation", {
+            'INTERPOLATION_DATA': interpolation_data,
+            'METHOD': 0,
+            'EXTENT': plate_extent,
+            'PIXEL_SIZE': 0.1,
+            'OUTPUT': qgis_tin_raster_path,
+        })
+
         plate_name_filter = ( f"{self.APPEARANCE} = {age} AND " f"({self.PLATE} = '{plate_name}')")
         plate_attributes = self.plate_polygons_layer.fields().toList()
         plate_features = self.plate_polygons_layer.getFeatures(QgsFeatureRequest().setFilterExpression(plate_name_filter))
@@ -168,7 +167,7 @@ class PreRasterTools:
         pol_provider.addAttributes(plate_attributes)
         pol_provider.addFeatures(plate_features)
         plate_polygon_layer.commitChanges()
-
+        QgsProject.instance().addMapLayer(plate_polygon_layer)
         clipped_raster_path = os.path.join(plate_output_folder, f"qgis_tin_prelim_{int(age)}_clipped.tif")
 
         # Clip raster using plate polygon
@@ -182,6 +181,7 @@ class PreRasterTools:
             'KEEP_RESOLUTION': True,  # Keep original resolution
             'OUTPUT': clipped_raster_path,
         })
+        QgsProject.instance().removeMapLayer(plate_polygon_layer)
 
     def generate_temporary_raster(self, age):
         """

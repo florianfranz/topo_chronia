@@ -36,7 +36,6 @@ class LinesSelections():
         pass
 
     def select_lines(self,age):
-        #Initial steps: plate anc continent polygons preparation
         plate_filter = (
             f"{self.APPEARANCE} = {age}"
         )
@@ -45,7 +44,7 @@ class LinesSelections():
         )
 
         if len(plate_features) == 0:
-            QgsMessageLog.logMessage("No features found for the selected age, skipped.",
+            QgsMessageLog.logMessage("No plate polygons features found for the selected age, skipped.",
                                      "Create Node Grid",
                                      Qgis.Info)
             return
@@ -110,7 +109,7 @@ class LinesSelections():
         )
         QgsMessageLog.logMessage(f"For age {age}, COB has {len(continent_features)}")
         if len(continent_features) == 0:
-            QgsMessageLog.logMessage("No features found for the selected age, skipped.",
+            QgsMessageLog.logMessage("No continent polygons features found for the selected age, skipped.",
                                      "Create Node Grid",
                                      Qgis.Info)
             return
@@ -140,7 +139,7 @@ class LinesSelections():
         RID_filter = ( f"{self.APPEARANCE} = {age} AND " f"({self.TYPE} = 'Ridge')")
         RID_features = list(self.plate_model_layer.getFeatures(QgsFeatureRequest().setFilterExpression(RID_filter)))
         if len(RID_features) == 0:
-            QgsMessageLog.logMessage("No features found for the selected age, skipped.","Create Node Grid",Qgis.Info)
+            QgsMessageLog.logMessage("No ridge features found for the selected age, skipped.","Create Node Grid",Qgis.Info)
             pass
         ridge_layer = QgsVectorLayer("LineString?crs=EPSG:4326",f"Ridges_{age}","memory")
         provider = ridge_layer.dataProvider()
@@ -171,7 +170,7 @@ class LinesSelections():
         ISO_features = list(
             self.plate_model_layer.getFeatures(QgsFeatureRequest().setFilterExpression(ISO_filter)))
         if len(ISO_features) == 0:
-            QgsMessageLog.logMessage("No features found for the selected age, skipped.", "Create Node Grid", Qgis.Info)
+            QgsMessageLog.logMessage("No isochrons features found for the selected age, skipped.", "Create Node Grid", Qgis.Info)
             pass
         isochron_layer = QgsVectorLayer("LineString?crs=EPSG:4326", f"ISO Lines {int(age)}", "memory")
         provider = isochron_layer.dataProvider()
@@ -215,7 +214,7 @@ class LinesSelections():
         SUB_features = list(
             self.plate_model_layer.getFeatures(QgsFeatureRequest().setFilterExpression(SUB_filter)))
         if len(SUB_features) == 0:
-            QgsMessageLog.logMessage("No features found for the selected age, skipped.", "Create Node Grid", Qgis.Info)
+            QgsMessageLog.logMessage("No subduction features found for the selected age, skipped.", "Create Node Grid", Qgis.Info)
             pass
         SUB_lines = QgsVectorLayer("LineString?crs=EPSG:4326", f"SUB Lines", "memory")
         lines_provider = SUB_lines.dataProvider()
@@ -269,7 +268,7 @@ class LinesSelections():
         ABA_features = list(
             self.plate_model_layer.getFeatures(QgsFeatureRequest().setFilterExpression(ABA_filter)))
         if len(ABA_features) == 0:
-            QgsMessageLog.logMessage("No features found for the selected age, skipped.", "Create Node Grid", Qgis.Info)
+            QgsMessageLog.logMessage("No abandoned arc features found for the selected age, skipped.", "Create Node Grid", Qgis.Info)
             pass
         ABA_lines = QgsVectorLayer("LineString?crs=EPSG:4326", "ABA Lines", "memory")
         lines_provider = ABA_lines.dataProvider()
@@ -289,7 +288,7 @@ class LinesSelections():
         PM_features = list(
             self.plate_model_layer.getFeatures(QgsFeatureRequest().setFilterExpression(PM_filter)))
         if len(PM_features) == 0:
-            QgsMessageLog.logMessage("No features found for the selected age, skipped.", "Create Node Grid", Qgis.Info)
+            QgsMessageLog.logMessage("No passive margin features found for the selected age, skipped.", "Create Node Grid", Qgis.Info)
             pass
         PM_lines = QgsVectorLayer("LineString?crs=EPSG:4326", "PM Lines", "memory")
         lines_provider = PM_lines.dataProvider()
@@ -349,7 +348,7 @@ class LinesSelections():
         RIB_features = list(
             self.plate_model_layer.getFeatures(QgsFeatureRequest().setFilterExpression(RIB_filter)))
         if len(RIB_features) == 0:
-            QgsMessageLog.logMessage("No features found for the selected age, skipped.",
+            QgsMessageLog.logMessage("No rifts features found for the selected age, skipped.",
                                      "Create Node Grid",
                                      Qgis.Info)
             return
@@ -483,7 +482,7 @@ class LinesSelections():
         CRA_features = list(
             self.plate_model_layer.getFeatures(QgsFeatureRequest().setFilterExpression(CRA_filter)))
         if len(CRA_features) == 0:
-            QgsMessageLog.logMessage("No features found for the selected age, skipped.", "Create Node Grid", Qgis.Info)
+            QgsMessageLog.logMessage("No cratons features found for the selected age, skipped.", "Create Node Grid", Qgis.Info)
             pass
         CRA_lines_layer = QgsVectorLayer("LineString?crs=EPSG:4326", f"CRA_lines_{age}", "memory")
         lines_provider = CRA_lines_layer.dataProvider()
@@ -550,7 +549,7 @@ class LinesSelections():
         OTM_features = list(
             self.plate_model_layer.getFeatures(QgsFeatureRequest().setFilterExpression(OTM_filter)))
         if len(OTM_features) == 0:
-            QgsMessageLog.logMessage("No features found for the selected age, skipped.", "Create Node Grid", Qgis.Info)
+            QgsMessageLog.logMessage("No other margin features found for the selected age, skipped.", "Create Node Grid", Qgis.Info)
             pass
         OTM_lines = QgsVectorLayer("LineString?crs=EPSG:4326", f"OTM Lines", "memory")
         lines_provider = OTM_lines.dataProvider()
@@ -571,7 +570,7 @@ class LinesSelections():
         COL_features = list(
             self.plate_model_layer.getFeatures(QgsFeatureRequest().setFilterExpression(COL_filter)))
         if len(COL_features) == 0:
-            QgsMessageLog.logMessage("No features found for the selected age, skipped.", "Create Node Grid", Qgis.Info)
+            QgsMessageLog.logMessage("No collision features found for the selected age, skipped.", "Create Node Grid", Qgis.Info)
             pass
         COL_lines = QgsVectorLayer("LineString?crs=EPSG:4326", f"COL lines", "memory")
         lines_provider = COL_lines.dataProvider()
@@ -602,7 +601,7 @@ class LinesSelections():
         HOT_features = list(
             self.plate_model_layer.getFeatures(QgsFeatureRequest().setFilterExpression(HOT_filter)))
         if len(HOT_features) == 0:
-            QgsMessageLog.logMessage("No features found for the selected age, skipped.", "Create Node Grid", Qgis.Info)
+            QgsMessageLog.logMessage("No hot-spots features found for the selected age, skipped.", "Create Node Grid", Qgis.Info)
             pass
         HOT_lines_layer = QgsVectorLayer("LineString?crs=EPSG:4326", f"HOT Lines_{age}", "memory")
         lines_provider = HOT_lines_layer.dataProvider()

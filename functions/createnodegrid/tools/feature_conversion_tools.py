@@ -741,12 +741,11 @@ class FeatureConversionTools:
             self.add_id_nodes(age)
             self.move_nodes_slightly(age)
 
-    def add_id_nodes_setting(self, age, setting):
+    def add_id_nodes_setting(self,nodes_layer_path):
         """
         Adds an id to each setting nodes layer.
         """
-        nodes_layer_path = os.path.join(self.output_folder_path, f"{setting}_nodes_{int(age)}.geojson")
-        nodes_layer = QgsVectorLayer(nodes_layer_path, f"{setting} Nodes {int(age)}", "ogr")
+        nodes_layer = QgsVectorLayer(nodes_layer_path, "Nodes {int(age)}", "ogr")
         nodes_provider = nodes_layer.dataProvider()
         nodes_provider.addAttributes([QgsField('SET_ID', QVariant.Double), QgsField('FLAG', QVariant.Double)])
         nodes_layer.updateFields()
