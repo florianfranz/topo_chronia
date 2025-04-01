@@ -1,7 +1,7 @@
 <table>
   <tr>
     <td style="width: 40%; text-align: center;">
-      <img src="PAN_logo.svg" alt="PAN" width="400"/>
+      <img src="images/PAN_logo.svg" alt="PAN" width="400"/>
     </td>
     <td style="width: 60%;">
       <h1>TopoChronia: Digital Elevation Models of the Earth Past based on the PANALESIS Plate Tectonic Model</h1>
@@ -26,7 +26,7 @@ values, from which a Digital Elevation Model (DEM) is interpolated using the QGI
 Triangulated Irregular Network (TIN). The oceanic volume of this DEM is then compared 
 to the present-day volume, in order to assess the difference of sea-level.
 
-![workflow](workflow.png)
+![workflow](images/workflow.png)
 ## Installation
 
 TopoChronia runs as a QGIS plugin. It can be used on QGIS version 3.36 or higher, and was developed with Python 3.12.3.
@@ -37,7 +37,7 @@ To install the plugin:
 
 * Manual installation:
   - Go to the [repository homepage](https://github.com/florianfranz/topo_chronia) click on "Code" and "Download ZIP". 
-  ![download_zip](download_zip.png)
+  ![download_zip](images/download_zip.png)
   - Open QGIS → Plugins → Manage and Install Plugins → Install from .zip
   - Select the downloaded .zip folder and click on "Install".
 
@@ -48,7 +48,7 @@ included with QGIS. For more information, including about packages and versions,
 Once installed, the plugin should be listed under the "Plugin", and there should be three icons appearing on the QGIS 
 toolbar as in the picture below:
 
-![img.png](img.png)
+![icons_bar.png](images/icons_bar.png)
 
 Each of these icons allows to access the three main phases required by TopoChronia to process plate tectonics features 
 from PANALESIS into palaeotopographic and palaeogeographic maps:
@@ -93,7 +93,7 @@ The processing steps are the following:
 * Merge nodes: Nodes from all settings are merged into a single nodes file.
 * Clean nodes: To avoid clash between different settings at the same location, nodes are cleaned.
 
-![PAN_nodes.png](PAN_nodes.png)
+![PAN_nodes.png](images/PAN_nodes.png)
 The picture above shows an example of the nodes distribution for the present-day PANALESIS reconstruction.
 
 ### Phase 2: Interpolate Raster
@@ -126,12 +126,12 @@ Also, see more recent presentations about the PANALESIS transition to open-sourc
 Automated tests can be done, once the plugin has been installed.
 Open the QGIS Python Console and type:
 ```python
-import topo_chronia.tests.test_plugin as test_plugin
+from topo_chronia.tests.test_runner import run_test
 ```
 
 First, you can perform a basic test to check if the plugin can be called and write in the console:
 ```python
-test_plugin.base_test()
+run_test("base_test")
 ```
 
 The output should be:
@@ -142,17 +142,17 @@ TopoChronia correctly installed and functions can be called.
 
 Second, a test can be done to load sample data (portion of the input data at 444 Ma)
 ```python
-test_plugin.load_sample_data()
+run_test("load_sample_data")
 ```
 
 The output should be sample intput layers loaded in the Qgis Project
-![test_load_layers.png](test_load_layers.png)
+![test_load_layers.png](images/test_load_layers.png)
 
 (Orange polygon = plate, purple polygon = continent-ocean boundary, red lines = plate model, green dots = geodesic grid)
 
 Third, a full processing test is done to create the node grid based on the sample data.
 ```python
-test_plugin.process_sample_data()
+run_test("process_sample_data")
 ```
 
 The output should be:
@@ -196,7 +196,7 @@ Adding cleaned nodes layer to map...
 
 And you should see the nodes:
 
-![test_process_layers.png](test_process_layers.png)
+![test_process_layers.png](images/test_process_layers.png)
 
 (Same symbology as above, with added new nodes in blue)
 
