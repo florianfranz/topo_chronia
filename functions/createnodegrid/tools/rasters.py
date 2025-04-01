@@ -34,59 +34,62 @@ class PreRasterTools:
         plate_features = list(
             self.plate_polygons_layer.getFeatures(QgsFeatureRequest().setFilterExpression(plate_filter)))
         for plate in plate_features:
-            plate_name_or = plate.attribute("PLATE")
-
-            # Rename specific plates
-            plate_name_mappings = {
-                "Nazca": "NAZ",
-                "Tong_Ker": "TONGA_KER",
-                "Fiji_N": "FIDJI_N",
-                "Fiji_E": "FIDJI_E",
-                "Fiji_W": "FIDJI_W",
-                "Carolina": "CAROLINE",
-                "India": "IND",
-                "Easter": "EAST",
-                "Gondwana": "GOND",
-                "NixonFord": "NIXFORD",
-                "Sinti-Holo": "SINTIHOLO",
-                "Laurentia": "LAURUSSIA"
-            }
-
-            plate_name = plate_name_mappings.get(plate_name_or,
-                                                 plate_name_or.upper())  # Default to uppercase if not mapped
-
-
-            bbox = plate.geometry().boundingBox()
-
-            # **First Condition:** Select nodes where PLATE = plate_name
-            plate_name_filter = f"{self.PLATE} = '{plate_name}'"
-            nodes_plate = list(nodes_layer.getFeatures(QgsFeatureRequest().setFilterExpression(plate_name_filter)))
-
-            # **Second Condition:** Select nodes where PLATE = "Z_DEM" AND they intersect the plate polygon
-            z_dem_filter = f"{self.PLATE} = 'Z_DEM'"
-            nodes_z_dem = [
-                node for node in nodes_layer.getFeatures(QgsFeatureRequest().setFilterExpression(z_dem_filter))
-                if node.geometry().intersects(plate.geometry())  # Check intersection
-            ]
-
-            # **Combine both lists**
-            nodes_features = nodes_plate + nodes_z_dem
-            if len(nodes_features) == 0:
+            if plate.geometry().isEmpty():
                 pass
             else:
-                plate_nodes_layer = QgsVectorLayer("Point?crs=EPSG:4326", f"Nodes_{plate_name}_{age}", "memory")
-                provider = plate_nodes_layer.dataProvider()
-                plate_nodes_layer.startEditing()
-                provider.addAttributes(attributes)
-                provider.addFeatures(nodes_features)
-                plate_nodes_layer.commitChanges()
-                QgsProject.instance().addMapLayer(plate_nodes_layer)
+                plate_name_or = plate.attribute("PLATE")
 
-                self.perform_prelim_raster_interpolation_plate_by_plate(plate_nodes_layer,
-                                                                        plate_name_or,
-                                                                        bbox,
-                                                                        age)
-                QgsProject.instance().removeMapLayer(plate_nodes_layer)
+                # Rename specific plates
+                plate_name_mappings = {
+                    "Nazca": "NAZ",
+                    "Tong_Ker": "TONGA_KER",
+                    "Fiji_N": "FIDJI_N",
+                    "Fiji_E": "FIDJI_E",
+                    "Fiji_W": "FIDJI_W",
+                    "Carolina": "CAROLINE",
+                    "India": "IND",
+                    "Easter": "EAST",
+                    "Gondwana": "GOND",
+                    "NixonFord": "NIXFORD",
+                    "Sinti-Holo": "SINTIHOLO",
+                    "Laurentia": "LAURUSSIA"
+                }
+
+                plate_name = plate_name_mappings.get(plate_name_or,
+                                                     plate_name_or.upper())  # Default to uppercase if not mapped
+
+
+                bbox = plate.geometry().boundingBox()
+
+                # **First Condition:** Select nodes where PLATE = plate_name
+                plate_name_filter = f"{self.PLATE} = '{plate_name}'"
+                nodes_plate = list(nodes_layer.getFeatures(QgsFeatureRequest().setFilterExpression(plate_name_filter)))
+
+                # **Second Condition:** Select nodes where PLATE = "Z_DEM" AND they intersect the plate polygon
+                z_dem_filter = f"{self.PLATE} = 'Z_DEM'"
+                nodes_z_dem = [
+                    node for node in nodes_layer.getFeatures(QgsFeatureRequest().setFilterExpression(z_dem_filter))
+                    if node.geometry().intersects(plate.geometry())  # Check intersection
+                ]
+
+                # **Combine both lists**
+                nodes_features = nodes_plate + nodes_z_dem
+                if len(nodes_features) == 0:
+                    pass
+                else:
+                    plate_nodes_layer = QgsVectorLayer("Point?crs=EPSG:4326", f"Nodes_{plate_name}_{age}", "memory")
+                    provider = plate_nodes_layer.dataProvider()
+                    plate_nodes_layer.startEditing()
+                    provider.addAttributes(attributes)
+                    provider.addFeatures(nodes_features)
+                    plate_nodes_layer.commitChanges()
+                    QgsProject.instance().addMapLayer(plate_nodes_layer)
+                    QgsMessageLog.logMessage(f"Processing plate {plate_name_or}")
+                    self.perform_prelim_raster_interpolation_plate_by_plate(plate_nodes_layer,
+                                                                            plate_name_or,
+                                                                            bbox,
+                                                                            age)
+                    QgsProject.instance().removeMapLayer(plate_nodes_layer)
 
         age_output_folder = os.path.join(self.output_folder_path, str(int(age)))
         self.create_mosaic_from_rasters(age_output_folder,age)
@@ -144,7 +147,6 @@ class PreRasterTools:
         # Define the output folder structure: output/age/plate_name
         age_output_folder = os.path.join(self.output_folder_path, str(int(age)))  # Convert age to string
         plate_output_folder = os.path.join(age_output_folder, plate_name)
-        QgsMessageLog.logMessage(f"plate extent: {plate_extent} ")
         # Create the folders if they don’t exist
         os.makedirs(plate_output_folder, exist_ok=True)
 
