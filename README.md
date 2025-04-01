@@ -11,7 +11,7 @@
 
 
 
-The TopoChronia Plugin is a free open source plugin 
+TopoChronia is a free open source plugin 
 for QGIS that converts plate tectonics input features into fully quantified 
 maps of the Earth past topography (palaeotopography) and geography (palaeogeography),
 using the PANALESIS plate tectonic model.
@@ -37,7 +37,7 @@ To install the plugin:
 
 * Manual installation:
   - Go to the [repository homepage](https://github.com/florianfranz/topo_chronia) click on "Code" and "Download ZIP". 
-  ![download_zip](images/download_zip.png)
+  ![download_zip](docs/source/_static/download_zip.png)
   - Open QGIS → Plugins → Manage and Install Plugins → Install from .zip
   - Select the downloaded .zip folder and click on "Install".
 

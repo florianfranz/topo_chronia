@@ -6,12 +6,15 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>497</width>
-    <height>372</height>
+    <width>483</width>
+    <height>365</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>TopoChronia Phase I: Create Node Grid</string>
+  </property>
+  <property name="styleSheet">
+   <string notr="true"/>
   </property>
   <widget class="QWidget" name="layoutWidget">
    <property name="geometry">
@@ -39,35 +42,39 @@
         <item>
          <widget class="QPushButton" name="Action_CreateAllAgeList_pushButton">
           <property name="text">
-           <string>Create Age List</string>
+           <string>01 - Create Age List</string>
           </property>
          </widget>
         </item>
         <item>
          <widget class="QPushButton" name="Action_FeatureConversion_pushButton">
           <property name="text">
-           <string>Convert Features</string>
+           <string>02 - Convert Features</string>
           </property>
          </widget>
         </item>
         <item>
          <widget class="QPushButton" name="Action_MergeNodes_pushButton">
           <property name="text">
-           <string>Merge All Nodes</string>
+           <string>03 - Merge All Nodes</string>
           </property>
          </widget>
         </item>
         <item>
          <widget class="QPushButton" name="Action_CleanNodes_pushButton">
           <property name="text">
-           <string>Clean Nodes</string>
+           <string>04 - Clean Nodes</string>
           </property>
          </widget>
         </item>
         <item>
          <widget class="QPushButton" name="Action_ProcessEverything_pushButton">
+          <property name="styleSheet">
+           <string notr="true">background-color: #5DAE8B;
+color: white;</string>
+          </property>
           <property name="text">
-           <string>Process All Steps</string>
+           <string>Directly Process All Steps</string>
           </property>
          </widget>
         </item>

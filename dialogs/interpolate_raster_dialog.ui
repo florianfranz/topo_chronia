@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>432</width>
-    <height>218</height>
+    <width>511</width>
+    <height>253</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -27,8 +27,8 @@
      <rect>
       <x>0</x>
       <y>20</y>
-      <width>403</width>
-      <height>194</height>
+      <width>481</width>
+      <height>231</height>
      </rect>
     </property>
     <layout class="QHBoxLayout" name="horizontalLayout">
@@ -40,35 +40,39 @@
        <item>
         <widget class="QPushButton" name="Action_CreateNodesAgeList_pushButton">
          <property name="text">
-          <string>Create Age List from Nodes</string>
+          <string>01 - Create Age List from Nodes</string>
          </property>
         </widget>
        </item>
        <item>
         <widget class="QPushButton" name="Action_InterpolateRaster_pushButton">
          <property name="text">
-          <string>Interpolate Raster</string>
+          <string>02 - Interpolate Raster</string>
          </property>
         </widget>
        </item>
        <item>
         <widget class="QPushButton" name="Action_CorrectWaterLoad_pushButton">
          <property name="text">
-          <string>Correct Water Load</string>
+          <string>03 - Correct Water Load</string>
          </property>
         </widget>
        </item>
        <item>
         <widget class="QPushButton" name="Action_FinalRaster_pushButton">
          <property name="text">
-          <string>Interpolate Final Raster</string>
+          <string>04 - Interpolate Final Raster</string>
          </property>
         </widget>
        </item>
        <item>
         <widget class="QPushButton" name="Action_ProcessEverything_pushButton">
+         <property name="styleSheet">
+          <string notr="true">background-color: #5DAE8B;
+color: white;</string>
+         </property>
          <property name="text">
-          <string>Process All Steps</string>
+          <string>Directly Process All Steps</string>
          </property>
         </widget>
        </item>

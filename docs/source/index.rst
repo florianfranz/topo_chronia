@@ -9,21 +9,21 @@ TopoChronia
 Introduction
 ============
 
-Welcome to the documentation for `TopoChronia <https://github.com/florianfranz/topo_chronia>`_. This guide will help you get started and provides a step-by-step guide
+Welcome to the documentation for `TopoChronia <https://github.com/florianfranz/topo_chronia>`_. This guide will help you get started and provides step-by-step instructions
 to process raw input PANALESIS data into fully quantified palaeotopographic maps for the entire Phanerozoic.
 
 Installation
 ============
 
-To install the plugin, go to the `releases folder <https://github.com/florianfranz/topo_chronia/blob/master/releases/new>`_
-and download the zip folder.
+To install the plugin, Go to the `repository homepage <https://github.com/florianfranz/topo_chronia>`_ click on "Code" and "Download ZIP".
 
-Once downloaded, open QGIS and click on "Plugins" → "Manage and Install Plugins".
-
-.. image:: _static/qgis_inst_plugin.png
+.. image:: _static/download_zip.png
    :alt: Description of the image
    :width: 400px
    :align: center
+
+
+Once downloaded, open QGIS and click on "Plugins" → "Manage and Install Plugins".
 
 The plugin manager window will open. On the left pane, select “Install from ZIP”, then browse to where the .zip folder
 was downloaded in the previous step. Select the topo_chronia.zip file and finally click on “Install Plugin”.
@@ -142,7 +142,7 @@ A new dialog will open:
    :width: 700px
    :align: center
 
-This phase is the longest and requires a few steps. First, click on "Create Age List". This will check what
+This phase is the longest and requires a few steps. First, click on "01 - Create Age List". This will check what
 reconstruction ages are common to the input layers (PM, PP and COB). in our case, we only have the 444 Ma age, which is
 displayed with its stratigraphic stage name, based on the `International Chronographic Chart of December 2024
 (International Commission on Stratigraphy) <https://stratigraphy.org/ICSchart/ChronostratChart2024-12.pdf>`_
@@ -153,18 +153,17 @@ displayed with its stratigraphic stage name, based on the `International Chronog
    :width: 400px
    :align: center
 
-Click on the desired age, and then click on "Prepare Data". This will create two layers in your output folders, which
-are the continent and plate polygons for the selected age only, that will be used later on during the nodes creation (for
-instance to check for intersections). Once completed (it should take a minute or so), the progress bar should show 100%.
+The next phase is the conversion from lines (extracted from the PM) into nodes with elevation. It may take up to a few minutes
+to process everything. In order to start, clicking on the "02 - Convert Features" button will perform the following operations:
 
-The next phase is the conversion from lines (extracted from the PM) into nodes with elevation. It may take up to 1 hours
-to process everything. In order, clicking on the "Convert Features" button will perform the following operations:
-
+* Prepare data: extract COB and PP for the desired age.
 * Select lines (extract all lines from the PM for all features, harmonize vertices density and, if needed, create polygons for specific settings, such as hot-spots and cratons)
 * Ridges (RID) to nodes
 * Isochron (ISO) to nodes
 * Preliminary raster interpolation (only using ridge and isochron nodes)
 
+To avoid the QGIS interface from freezing and optimize the computing time, the lines selections as well as the ridge and isochrons conversions are sent to threads.
+The preliminary raster interpolation however is very unstable with threads so it is processed normally. Having the interface freezing for a few seconds (up to a minute) is therefore possible.
 Then, once the preliminary raster is interpolated, the remaining features are processed in parallel, using threads:
 
 * Lower subduction (LWS) to nodes
@@ -188,8 +187,8 @@ no checks for intersection or overlap between different settings have been made,
    :align: center
 
 We can now go on with the next step which is merge all nodes into a single layer "all_nodes_444.geojson", by clicking
-on "Merge All Nodes". Once this is done, we are ready for the last step that is the cleaning of nodes from different
-settings that might clash (either be too close from one another or overlap). This final operation might take some time
+on "03 -Merge All Nodes". Once this is done, we are ready for the last step that is the cleaning of nodes from different
+settings that might clash (either be too close from one another or overlap) by clicking on "04 - Clean Nodes". This final operation might take some time
 because we need to check every node against all nodes present in a certain radius.
 
 After the cleaning process is done, we have a layer containing all nodes that render coherent settings, without clashes.
@@ -201,6 +200,8 @@ After the cleaning process is done, we have a layer containing all nodes that re
 
 **NB:** The demo data is provided following a "Europe-fixed" frame, which explains why it differs from other sources. We
 strongly advise not using the demo data for any other purposes outside of testing this plugin.
+
+**NB:**: If you want to perform all steps in one go, you just need to click on "Directly Process All Steps" green button.
 
 Interpolate Raster
 ------------------
@@ -214,10 +215,10 @@ Click on the last icon "Interpolate Raster", a new dialog will open:
    :width: 400px
    :align: center
 
-As per the last phase, a few steps are required here. First, click on "Create Age List from Nodes" will search the
+As per the last phase, a few steps are required here. First, click on "01 - Create Age List from Nodes" will search the
 output folder for all nodes layer and return the available ages. L
 
-ike we did before, select the 444 Ma age and click on "Interpolate Raster". This step will perform a few tasks before
+ike we did before, select the 444 Ma age and click on "02 - Interpolate Raster". This step will perform a few tasks before
 doing the interpolation itself, including remove any duplicate geometries and reproject the nodes layer into ESRI:54034
 projection - World Cylindrical Equal Area (WCEA).
 
@@ -235,20 +236,30 @@ on the corners of the map.
 
 We are now able to calculate the oceanic volume (simplified as being the volume below elevation = 0m) and compare it
 with the current oceanic volume calculated using ETOPO 2022 data, which is used as a reference. This will inform us
-about the required sea-level increase (or decrease) needed to reach the reference volume.
+about the required sea-level increase (or decrease) needed to reach the reference volume. Click on "03 - Correct Water Load".
 
 This change in sea-level must then be accounted for, as the water load (added or removed) will impact the elevation. For
 this, click on "Correct Water Load". Once the water load is accounted for, the nodes layer will be updated with a new
 elevation value "Z_WLC". In our case, the corrected sea-level equals to 78m above present-day, and will be added to all
 nodes.
 
-Finally, by clicking on "Interpolate Final Raster", a final raster will be created using the same method as before (QGIS
+The outputs are saved into a text file located in the output folder "water_load_correction_summary.txt"
+
+Finally, by clicking on "04 - Interpolate Final Raster", a final raster will be created using the same method as before (QGIS
 TIN), based on the water load corrected elevation, with filling of no-data pixels.
 
 .. image:: _static/int_raster_map_2.png
    :alt: Description of the image
    :width: 700px
    :align: center
+
+Final checks are done to test whether or not the applied corrections to the final raster worked, by calculating the final volume of oceans under the z=0m.
+Final outputs are saved into a text file located in the output folder "water_load_correction_summary_f.txt"
+
+
+**NB:**: If you want to perform all steps in one go, you just need to click on "Directly Process All Steps" green button.
+
+
 
 Contributing
 ============
