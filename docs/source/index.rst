@@ -28,11 +28,6 @@ Once downloaded, open QGIS and click on "Plugins" → "Manage and Install Plugin
 The plugin manager window will open. On the left pane, select “Install from ZIP”, then browse to where the .zip folder
 was downloaded in the previous step. Select the topo_chronia.zip file and finally click on “Install Plugin”.
 
-.. image:: _static/qgis_inst_zip.png
-   :alt: Description of the image
-   :width: 700px
-   :align: center
-
 After clicking on “Install Plugin”, a green message box should appear on top notifying you that the install was
 successful.
 
@@ -216,9 +211,9 @@ Click on the last icon "Interpolate Raster", a new dialog will open:
    :align: center
 
 As per the last phase, a few steps are required here. First, click on "01 - Create Age List from Nodes" will search the
-output folder for all nodes layer and return the available ages. L
+output folder for all nodes layer and return the available ages.
 
-ike we did before, select the 444 Ma age and click on "02 - Interpolate Raster". This step will perform a few tasks before
+Like we did before, select the 444 Ma age and click on "02 - Interpolate Raster". This step will perform a few tasks before
 doing the interpolation itself, including remove any duplicate geometries and reproject the nodes layer into ESRI:54034
 projection - World Cylindrical Equal Area (WCEA).
 
@@ -263,7 +258,7 @@ Final outputs are saved into a text file located in the output folder "water_loa
 
 Contributing
 ============
-
+We welcome contributions from the community, feel free to also suggest enhancements, request changes or submit issues.
 To contribute:
 
 1. Fork the repository
