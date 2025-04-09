@@ -36,7 +36,7 @@ A complete documentation including a step-by-step tutorial is available at https
 To install the plugin:
 
 * Manual installation:
-  - The zipped plugin is accessible on [Zenodo](https://zenodo.org/records/15166680) go to "Files", "topo_chronia.zip" and click on "Download". 
+  - The zipped plugin is accessible on [Zenodo](https://doi.org/10.5281/zenodo.15166527) go to "Files", "topo_chronia.zip" and click on "Download". 
   ![download_zip](docs/source/_static/download_zip.png)
   - Open QGIS → Plugins → Manage and Install Plugins → Install from .zip
   - Select the downloaded .zip folder and click on "Install".
