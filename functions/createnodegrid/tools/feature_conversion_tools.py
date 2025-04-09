@@ -8,14 +8,9 @@ from qgis.core import (Qgis, edit, QgsPoint, QgsMessageLog, QgsFeatureRequest, Q
 
 from qgis.PyQt.QtCore import QVariant
 
-try:
-    import geopy
-    has_geopy = True
-    from geopy.distance import geodesic, great_circle
-    from geopy.point import Point
-
-except Exception:
-    has_geopy = False
+from ....ext_libraries import geopy
+from geopy.distance import geodesic, great_circle
+from geopy.point import Point
 
 from ...base_tools import BaseTools
 base_tools = BaseTools()

@@ -1,11 +1,22 @@
 import os
 import sys
+import platform
 from qgis.utils import iface
 from qgis.core import Qgis, QgsVectorLayer, QgsProject, QgsApplication, QgsSettings, QgsMessageLog
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 def base_test():
     print("TopoChronia correctly installed and functions can be called.")
+    system_name = platform.system()
+    print(f"Operating System: {system_name}")
+    try:
+        from topo_chronia.ext_libraries import geopy
+        from geopy.distance import geodesic, great_circle
+        from geopy.point import Point
+        print("geopy correctly installed, imported geopy.distance.geodesic, geop.distance.great_circle and geopy.point.Point")
+    except ImportError as e:
+        print("Cannot import geopy. Please install geopy ,manually ")
+        QgsMessageLog.logMessage(f"Failed to import geopy: {e}","Test", Qgis.Critical)
     return
 
 def load_sample_data():
@@ -59,40 +70,46 @@ def load_sample_data():
     return PM_sample, PP_sample, COB_sample, GG_sample
 
 def process_sample_data():
-    output_dir = "topo_chronia_tests"
+    system_name = platform.system()
+    if system_name == "Darwin":
+        output_dir = os.path.expanduser("~/Desktop/topo_chronia_tests")
+    else:
+        output_dir = "topo_chronia_tests"
+
+    print(f"Operating System: {system_name}")
     os.makedirs(output_dir, exist_ok=True)
     PM, PP, COB, GG = load_sample_data()
     age = 444
 
-    from functions.createnodegrid.conversions.selections import LinesSelections
+    from topo_chronia.functions.createnodegrid.conversions.selections import LinesSelections
     lines_selection = LinesSelections()
-    from functions.createnodegrid.conversions.ridge import RIDConversion
+    from topo_chronia.functions.createnodegrid.conversions.ridge import RIDConversion
     rid_conversion = RIDConversion()
-    from functions.createnodegrid.conversions.isochron import ISOConversion
+    from topo_chronia.functions.createnodegrid.conversions.isochron import ISOConversion
     iso_conversion = ISOConversion()
-    from functions.createnodegrid.conversions.abandoned_arc import ABAConversion
+    from topo_chronia.functions.createnodegrid.conversions.abandoned_arc import ABAConversion
     aba_conversion = ABAConversion()
-    from functions.createnodegrid.conversions.lower_subduction import LWSConversion
+    from topo_chronia.functions.createnodegrid.conversions.lower_subduction import LWSConversion
     lws_conversion = LWSConversion()
-    from functions.createnodegrid.conversions.continent import CTNConversion
+    from topo_chronia.functions.createnodegrid.conversions.continent import CTNConversion
     ctn_conversion = CTNConversion()
-    from functions.createnodegrid.conversions.passive_margin_wedge import PMWConversion
+    from topo_chronia.functions.createnodegrid.conversions.passive_margin_wedge import PMWConversion
     pmw_conversion = PMWConversion()
-    from functions.createnodegrid.conversions.passive_margin_continent import PMCConversion
+    from topo_chronia.functions.createnodegrid.conversions.passive_margin_continent import PMCConversion
     pmc_conversion = PMCConversion()
-    from functions.createnodegrid.conversions.upper_subduction import UPSConversion
+    from topo_chronia.functions.createnodegrid.conversions.upper_subduction import UPSConversion
     ups_conversion = UPSConversion()
-    from functions.createnodegrid.conversions.craton import CRAConversion
+    from topo_chronia.functions.createnodegrid.conversions.craton import CRAConversion
     cra_conversion = CRAConversion()
-    from functions.createnodegrid.conversions.hot_spot import HOTConversion
+    from topo_chronia.functions.createnodegrid.conversions.hot_spot import HOTConversion
     hot_conversion = HOTConversion()
-    from functions.createnodegrid.conversions.collision import COLConversion
+    from topo_chronia.functions.createnodegrid.conversions.collision import COLConversion
     col_conversion = COLConversion()
-    from functions.createnodegrid.conversions.rift import RIBConversion
+    from topo_chronia.functions.createnodegrid.conversions.rift import RIBConversion
     rib_conversion = RIBConversion()
-    from functions.createnodegrid.conversions.other_margin import OTMConversion
+    from topo_chronia.functions.createnodegrid.conversions.other_margin import OTMConversion
     otm_conversion = OTMConversion()
-    from functions.createnodegrid.tools.feature_conversion_tools import FeatureConversionTools
+    from topo_chronia.functions.createnodegrid.tools.feature_conversion_tools import FeatureConversionTools
     feature_conversion_tools = FeatureConversionTools()
 
 

@@ -118,8 +118,7 @@ would result in a :class:`ValueError` exception.
 """
 from math import asin, atan2, cos, sin, sqrt
 
-from geographiclib.geodesic import Geodesic
-
+from topo_chronia.ext_libraries.geographiclib.geodesic import Geodesic
 from geopy import units, util
 from geopy.point import Point
 from geopy.units import radians
