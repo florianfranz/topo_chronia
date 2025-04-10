@@ -1,8 +1,15 @@
 import json
+import os
+import platform
 from qgis.core import Qgis, QgsVectorLayer, QgsRasterLayer, QgsProject, QgsMessageLog,QgsCoordinateReferenceSystem
 
 class BaseTools:
-    INPUT_FILE_PATH = "input_files.txt"
+    system_name = platform.system()
+    if system_name in ["Darwin", "Linux"]:
+        INPUT_FILE_PATH = os.path.expanduser("~/Desktop/input_files.txt")
+    else:
+        INPUT_FILE_PATH = "input_files.txt"
+
     def __init__(self):
         # Any initialization code goes here
         pass

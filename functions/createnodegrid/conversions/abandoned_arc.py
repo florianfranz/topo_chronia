@@ -17,7 +17,6 @@ from ..tools.feature_conversion_tools import FeatureConversionTools
 feature_conversion_tools = FeatureConversionTools()
 
 class ABAConversion:
-    INPUT_FILE_PATH = "input_files.txt"
     output_folder_path = base_tools.get_layer_path("Output Folder")
 
     def __init__(self):

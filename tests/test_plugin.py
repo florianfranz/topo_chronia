@@ -71,7 +71,7 @@ def load_sample_data():
 
 def process_sample_data():
     system_name = platform.system()
-    if system_name == "Darwin":
+    if system_name in ["Darwin", "Linux"]:
         output_dir = os.path.expanduser("~/Desktop/topo_chronia_tests")
     else:
         output_dir = "topo_chronia_tests"
@@ -140,8 +140,9 @@ def process_sample_data():
     try:
         lines_selection.select_lines(age)
         print("Lines Selection: Success!")
-    except Exception as e:
-        print(f"Error: {e}")
+    except Exception:
+        print(
+            "Fixing geometry processing failed for hot-spots. This issue might be caused by an outdated GEOS version on macOS. Please update GEOS to version 3.10 or higher. Using unchecked hot-spots polygons")
     print("Processing Ridges...")
     try:
         rid_conversion.ridge_to_nodes(age)

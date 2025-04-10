@@ -8,7 +8,6 @@ from .sediments_tools import SEDConversionTools
 sed_tools = SEDConversionTools()
 
 class PMConversionTools:
-    INPUT_FILE_PATH = "input_files.txt"
     output_folder_path = base_tools.get_layer_path("Output Folder")
     APPEARANCE = "APPEARANCE"
 

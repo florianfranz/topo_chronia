@@ -16,7 +16,6 @@ sed_tools = SEDConversionTools()
 
 
 class OTMConversion:
-    INPUT_FILE_PATH = "input_files.txt"
     geodesic_grid_path = base_tools.get_layer_path("Geodesic Grid")
     geodesic_grid_layer = QgsVectorLayer(geodesic_grid_path, "Geodesic Grid", 'ogr')
     output_folder_path = base_tools.get_layer_path("Output Folder")

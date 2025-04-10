@@ -7,7 +7,6 @@ from ...base_tools import BaseTools
 base_tools = BaseTools()
 
 class SeaLevel:
-    INPUT_FILE_PATH = "input_files.txt"
     output_folder_path = base_tools.get_layer_path("Output Folder")
     APPEARANCE = "APPEARANCE"
     old_TM_oceanic_volume_ref = -1333639062341560000

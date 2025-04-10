@@ -19,7 +19,6 @@ from ..tools.rift_tools import RIBConversionTools
 rib_tools = RIBConversionTools()
 
 class LinesSelections():
-    INPUT_FILE_PATH = "input_files.txt"
     plate_model_path = base_tools.get_layer_path("Plate Model")
     plate_model_layer = QgsVectorLayer(plate_model_path, "Plate Model", 'ogr')
     plate_polygons_path = base_tools.get_layer_path("Plate Polygons")
@@ -701,12 +700,15 @@ class LinesSelections():
                     "type": "FeatureCollection",
                     "features": all_polygons
                 }, indent=2))
-            processing.run("native:fixgeometries",
-                           {'INPUT': output_polygons_layer_path,
-                            'METHOD': 1, 'OUTPUT': fixed_polygon_layer_path})
-            processing.run("native:dissolve", {'INPUT': QgsProcessingFeatureSourceDefinition(
-                fixed_polygon_layer_path,
-                selectedFeaturesOnly=False, featureLimit=-1,
-                flags=QgsProcessingFeatureSourceDefinition.FlagOverrideDefaultGeometryCheck,
-                geometryCheck=QgsFeatureRequest.GeometrySkipInvalid), 'FIELD': [], 'SEPARATE_DISJOINT': True,
-                'OUTPUT': diss_polygon_layer_path})
+            try:
+                processing.run("native:fixgeometries",
+                               {'INPUT': output_polygons_layer_path,
+                                'METHOD': 1, 'OUTPUT': fixed_polygon_layer_path})
+                processing.run("native:dissolve", {'INPUT': QgsProcessingFeatureSourceDefinition(
+                    fixed_polygon_layer_path,
+                    selectedFeaturesOnly=False, featureLimit=-1,
+                    flags=QgsProcessingFeatureSourceDefinition.FlagOverrideDefaultGeometryCheck,
+                    geometryCheck=QgsFeatureRequest.GeometrySkipInvalid), 'FIELD': [], 'SEPARATE_DISJOINT': True,
+                    'OUTPUT': diss_polygon_layer_path})
+            except Exception:
+                raise

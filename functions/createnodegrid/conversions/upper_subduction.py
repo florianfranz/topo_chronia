@@ -18,7 +18,6 @@ from ..tools.feature_conversion_tools import FeatureConversionTools
 feature_conversion_tools = FeatureConversionTools()
 
 class UPSConversion:
-    INPUT_FILE_PATH = "input_files.txt"
     continent_polygons_path = base_tools.get_layer_path("Continent Polygons")
     continent_polygons_layer = QgsVectorLayer(continent_polygons_path, "Continent Polygons", 'ogr')
     geodesic_grid_path = base_tools.get_layer_path("Geodesic Grid")

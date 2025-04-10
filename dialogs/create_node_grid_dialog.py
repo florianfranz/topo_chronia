@@ -1,5 +1,6 @@
 import os
 import time
+import platform
 from qgis.PyQt import uic,QtWidgets
 from PyQt5.QtWidgets import QApplication
 from qgis.core import Qgis, QgsMessageLog, QgsVectorLayer, edit
@@ -113,12 +114,16 @@ class CreateNodeGridDialog(QtWidgets.QDialog, FORM_CLASS):
         plate polygons, and continents polygons. Displays ages with
         their respective chronostratigraphic age names.
         """
+        system_name = platform.system()
+        if system_name in ["Darwin", "Linux"]:
+            file_path = os.path.expanduser("~/Desktop/pStrAge_values.txt")
+        else:
+            file_path = "pStrAge_values.txt"
         try:
             self.age_listWidget.clear()
 
             # If any age list is None, read from file
             if self.PM_age_list is None or self.PP_age_list is None or self.CP_age_list is None:
-                file_path = "pStrAge_values.txt"
                 if os.path.exists(file_path):
                     with open(file_path, "r") as file:
                         all_age_list = [float(line.split()[0]) for line in file]
@@ -134,7 +139,7 @@ class CreateNodeGridDialog(QtWidgets.QDialog, FORM_CLASS):
                 return
 
             # Save ages to file and populate UI
-            with open("pStrAge_values.txt", "w") as file:
+            with open(file_path, "w") as file:
                 for i, age_value in enumerate(all_age_list, start=1):
                     pStrAge = f"{age_value} Ma - [ {base_tools.get_relative_age(age_value)} ]"
                     self.age_listWidget.addItem(pStrAge)
@@ -255,13 +260,20 @@ class CreateNodeGridDialog(QtWidgets.QDialog, FORM_CLASS):
 
     def write_elapsed_time(self):
         """Write elapsed time and log errors if any."""
+        system_name = platform.system()
+        if system_name in ["Darwin", "Linux"]:
+            file_path = os.path.expanduser("~/Desktop/time.txt")
+            errors_path = os.path.expanduser("~/Desktop/errors.log")
+        else:
+            file_path = "time.txt"
+            errors_path = "errors.log"
         elapsed_time = time.time() - self.start_time
-        with open("time.txt", "a") as file:
+        with open(file_path, "a") as file:
             for age in self.age_values:
                 file.write(f"Age {age} - Elapsed time: {elapsed_time:.2f} seconds\n")
 
         if self.errors:
-            with open("errors.log", "a") as err_file:
+            with open(errors_path, "a") as err_file:
                 err_file.write("\n".join(self.errors) + "\n")
             QgsMessageLog.logMessage("Errors occurred during processing. See errors.log", "Processing", Qgis.Warning)
 

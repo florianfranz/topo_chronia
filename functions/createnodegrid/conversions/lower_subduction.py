@@ -19,7 +19,6 @@ from ..tools.feature_conversion_tools import FeatureConversionTools
 feature_conversion_tools = FeatureConversionTools()
 
 class LWSConversion:
-    INPUT_FILE_PATH = "input_files.txt"
     plate_polygons_path = base_tools.get_layer_path("Plate Polygons")
     plate_polygons_layer = QgsVectorLayer(plate_polygons_path, "Plate Polygons", 'ogr')
     continent_polygons_path = base_tools.get_layer_path("Continent Polygons")

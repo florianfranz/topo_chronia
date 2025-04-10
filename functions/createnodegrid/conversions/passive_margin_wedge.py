@@ -16,7 +16,6 @@ from ..tools.feature_conversion_tools import FeatureConversionTools
 feature_conversion_tools = FeatureConversionTools()
 
 class PMWConversion:
-    INPUT_FILE_PATH = "input_files.txt"
     continent_polygons_path = base_tools.get_layer_path("Continent Polygons")
     continent_polygons_layer = QgsVectorLayer(continent_polygons_path, "Continent Polygons", 'ogr')
     output_folder_path = base_tools.get_layer_path("Output Folder")

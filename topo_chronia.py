@@ -26,6 +26,7 @@ import os
 import sys
 import os.path
 import json
+import platform
 
 from qgis.PyQt.QtCore import QSettings, QTranslator, QCoreApplication
 from qgis.PyQt.QtGui import QIcon
@@ -744,7 +745,13 @@ class TopoChronia:
             # All checks are successful, proceed with creating the node grid
             QgsMessageLog.logMessage("All checks successful, moving to Phase I: Create Node Grid.",
                                      "Check Configuration", Qgis.Info)
-            file_path = "input_files.txt"
+
+            system_name = platform.system()
+            if system_name in ["Darwin", "Linux"]:
+                file_path = os.path.expanduser("~/Desktop/input_files.txt")
+            else:
+                file_path = "input_files.txt"
+
             with open(file_path, "w") as json_file:
                 json.dump(self.input_fc, json_file)
             self.run_create_node_grid()
