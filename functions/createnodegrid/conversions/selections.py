@@ -711,4 +711,9 @@ class LinesSelections():
                     geometryCheck=QgsFeatureRequest.GeometrySkipInvalid), 'FIELD': [], 'SEPARATE_DISJOINT': True,
                     'OUTPUT': diss_polygon_layer_path})
             except Exception:
-                raise
+                QgsMessageLog.logMessage(f"Fixing geometries failed, probably due to GEOS version not being 3.10 or higher. Please upgrade your version of GEOS. Hot-spot polygons will left unchecked")
+                with open(diss_polygon_layer_path, 'w') as output_file:
+                    output_file.write(json.dumps({
+                        "type": "FeatureCollection",
+                        "features": all_polygons
+                    }, indent=2))

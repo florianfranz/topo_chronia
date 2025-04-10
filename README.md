@@ -139,6 +139,8 @@ run_test("base_test")
 The output should be:
 ```
 TopoChronia correctly installed and functions can be called.
+Operating System: ...
+geopy correctly installed, imported geopy.distance.geodesic, geop.distance.great_circle and geopy.point.Point
 ```
 
 
@@ -195,8 +197,8 @@ Cleaning Nodes (2/2)...
 Nodes inside Hot-Spots Cleaning: Success!
 Adding cleaned nodes layer to map...
 ```
-
-And you should see the nodes:
+**NB:** Some functions (such as vector geometry fixing) require GEOS v3.10 or higher to work. If the function cannot be executed, some geometries will be left unchecked.
+In the end, you should see the nodes:
 
 ![test_process_layers.png](images/test_process_layers.png)
 
