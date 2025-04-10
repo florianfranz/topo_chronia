@@ -30,20 +30,22 @@ to the present-day volume, in order to assess the difference of sea-level.
 ## Installation
 
 TopoChronia runs as a QGIS plugin. It can be used on QGIS version 3.36 or higher, and was developed with Python 3.12.3.
+TopoChronia requires GEOS v3.10 or higher for some vector operations, make sure to check your version of GEOS in the "About" 
+section of QGIS.
 
 A complete documentation including a step-by-step tutorial is available at https://topo-chronia.readthedocs.io/en/latest/#
 
 To install the plugin:
 
 * Manual installation:
-  - The zipped plugin is accessible on [Zenodo](https://doi.org/10.5281/zenodo.15166527) go to "Files", "topo_chronia.zip" and click on "Download". 
-  ![download_zip](docs/source/_static/download_zip.png)
+  - The zipped plugin is accessible on [the releases page](https://github.com/florianfranz/topo_chronia/releases/latest), under "Assets", click on "topo_chronia.zip" to start the download. 
   - Open QGIS → Plugins → Manage and Install Plugins → Install from .zip
   - Select the downloaded .zip folder and click on "Install".
 
 Apart from native QGIS python libraries, the plugin also requires the `pandas` Python package, that is oftentimes not
 included with QGIS. For more information, including about packages and versions, check the [requirements.txt](./requirements.txt).  
 
+External libraries `geopy` and `geographiclib` are also required and already included in `ext_libraries`.
 
 Once installed, the plugin should be listed under the "Plugin", and there should be three icons appearing on the QGIS 
 toolbar as in the picture below:

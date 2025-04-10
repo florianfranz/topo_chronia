@@ -15,13 +15,7 @@ to process raw input PANALESIS data into fully quantified palaeotopographic maps
 Installation
 ============
 
-To install the plugin, Go to the `repository homepage <https://github.com/florianfranz/topo_chronia>`_ click on "Code" and "Download ZIP".
-
-.. image:: _static/download_zip.png
-   :alt: Description of the image
-   :width: 400px
-   :align: center
-
+To install the plugin, Go to the `releases page <https://github.com/florianfranz/topo_chronia/releases/latest>`_, under "Assets", click on "topo_chronia.zip" to start the download.
 
 Once downloaded, open QGIS and click on "Plugins" → "Manage and Install Plugins".
 
@@ -31,12 +25,13 @@ was downloaded in the previous step. Select the topo_chronia.zip file and finall
 After clicking on “Install Plugin”, a green message box should appear on top notifying you that the install was
 successful.
 
-**Note:** This plugin uses external libraries, such as geopy which is included within the plugin itself under
+**Note:** This plugin uses external libraries, such as geopy and geographilib which are included within the plugin itself under
 `external libraries folder <https://github.com/florianfranz/topo_chronia/blob/master/ext_libraries>`_.
 Other libraries might cause trouble depending on your Python version and dependencies.
 These libraries are listed in the `requirements <https://github.com/florianfranz/topo_chronia/blob/master/requirements.txt>`_.
 and can be installed using the OSGeo4W Shell (Windows) or in the standard Python installation for macOS and Linux.
-
+TopoChronia requires GEOS v3.10 or higher for some vector operations, make sure to check your version of GEOS in the "About"
+section of QGIS.
 If successful, your toolbar should have three new icons, representing the three TopoChronia phases:
 
 .. image:: _static/three_icons.png
