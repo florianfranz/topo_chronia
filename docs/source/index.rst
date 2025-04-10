@@ -99,12 +99,11 @@ message, confirming that all checks have been passed.
 One last step before finishing this phase, select an output folder location: this is where all outputs will be stored.
 
 Once all checks are passed, we now have the option to move to Phase I: Create Node Grid. In order to avoid the need to
-repeat all checks every time, the results of this phase are stored in a “input_files.txt” in the default folder of QGIS,
-typically:
+repeat all checks every time, the results of this phase are stored in a “input_files.txt”, typically:
 
 * For Windows: C://Users/YourUsername/Documents
-* For macOS: /Users/YourUsername/Documents
-* For Linux: /home/yourusername/Documents
+* For macOS: /Users/YourUsername/Desktop
+* For Linux: /home/yourusername/Desktop
 
 In this file, all paths to the input layers are listed in a json dictionary as follows (with your own path for each
 layer):
