@@ -216,9 +216,19 @@ Python versions you are using as well as your OS.
 
 ## Authors
 
-* **Florian Franziskakis** - *florian.franziskakis@unige.ch*
-* **Christian Vérard**
-* **Grégory Giuliani**
+**Florian Franziskakis**  
+*florian.franziskakis@unige.ch*  
+enviroSPACE group, Institute for Environmental Sciences, University of Geneva
+
+**Christian Vérard**  
+Earth Surface Dynamics group, Department of Earth Sciences, University of Geneva
+
+**Sébastien Castelltort**  
+Earth Surface Dynamics group, Department of Earth Sciences, University of Geneva
+
+**Grégory Giuliani**  
+enviroSPACE group, Institute for Environmental Sciences, University of Geneva
+
 
 ## License
 
