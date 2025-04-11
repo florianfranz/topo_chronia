@@ -43,7 +43,9 @@ To install the plugin:
   - Select the downloaded .zip folder and click on "Install".
 
 Apart from native QGIS python libraries, the plugin also requires the `pandas` Python package, that is oftentimes not
-included with QGIS. For more information, including about packages and versions, check the [requirements.txt](./requirements.txt).  
+included with QGIS. If a message box appears to ask for manual installation, just clickon "ok". A full guide on how to install pandas inside QGIS is provided at:
+https://topo-chronia.readthedocs.io/en/latest/#installation
+For more information about required packages and versions, check the [requirements.txt](./requirements.txt).  
 
 External libraries `geopy` and `geographiclib` are also required and already included in `ext_libraries`.
 

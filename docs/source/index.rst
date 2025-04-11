@@ -17,19 +17,44 @@ Installation
 
 To install the plugin, Go to the `releases page <https://github.com/florianfranz/topo_chronia/releases/latest>`_, under "Assets", click on "topo_chronia.zip" to start the download.
 
-Once downloaded, open QGIS and click on "Plugins" → "Manage and Install Plugins".
+Once downloaded, open QGIS and click on "Plugins" / "Manage and Install Plugins".
 
-The plugin manager window will open. On the left pane, select “Install from ZIP”, then browse to where the .zip folder
-was downloaded in the previous step. Select the topo_chronia.zip file and finally click on “Install Plugin”.
+The plugin manager window will open. On the left pane, select "Install from ZIP", then browse to where the .zip folder
+was downloaded in the previous step. Select the topo_chronia.zip file and finally click on "Install Plugin".
 
-After clicking on “Install Plugin”, a green message box should appear on top notifying you that the install was
-successful.
+After clicking on "Install Plugin", a green message box should appear on top notifying you that the install was
+successful. If you see a message about pandas dependencies needing manual installation, just click on "ok".
+
+If the pandas library needs manual installation, the process is straightforward on Windows.
+
+::
+
+    Open the OSGeo4W Shell (Open Source Geospatial 4 Windows Shell) from the Start menu and run the following command:
+    pip install pandas
+
+On other platforms, you might need to check what Python environment is used by QGIS.
+To install pandas in QGIS on macOS or Linux, follow these steps:
+
+::
+
+    Open QGIS and in the Python Console, run:
+    import sys
+    print(sys.executable)
+
+    You will get a path like:
+    **macOS** /Applications/QGIS.app/Contents/MacOS/bin/python3
+    **Linux** /usr/bin/python3 or /usr/local/bin/python3 (depending on your installation)
+
+    Open your terminal and run the following command:
+
+       /your/path/ending/with/python3 -m pip install pandas
+
 
 **Note:** This plugin uses external libraries, such as geopy and geographilib which are included within the plugin itself under
 `external libraries folder <https://github.com/florianfranz/topo_chronia/blob/master/ext_libraries>`_.
 Other libraries might cause trouble depending on your Python version and dependencies.
 These libraries are listed in the `requirements <https://github.com/florianfranz/topo_chronia/blob/master/requirements.txt>`_.
-and can be installed using the OSGeo4W Shell (Windows) or in the standard Python installation for macOS and Linux.
+and can be installed using the OSGeo4W Shell (Windows) or in the standard Python installation for macOS and Linux, as described above.
 TopoChronia requires GEOS v3.10 or higher for some vector operations, make sure to check your version of GEOS in the "About"
 section of QGIS.
 If successful, your toolbar should have three new icons, representing the three TopoChronia phases:
@@ -229,8 +254,8 @@ about the required sea-level increase (or decrease) needed to reach the referenc
 
 This change in sea-level must then be accounted for, as the water load (added or removed) will impact the elevation. For
 this, click on "Correct Water Load". Once the water load is accounted for, the nodes layer will be updated with a new
-elevation value "Z_WLC". In our case, the corrected sea-level equals to 78m above present-day, and will be added to all
-nodes.
+elevation value "Z_WLC". In our case, the corrected sea-level equals to 256m above present-day, and will be added to all
+nodes. If you had errors with processing due to a GEOS version older than 3.10, you might get a different value.
 
 The outputs are saved into a text file located in the output folder "water_load_correction_summary.txt"
 
