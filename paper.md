@@ -44,32 +44,35 @@ sufficient information in terms of geological features to reconstruct a fully qu
 
 ## Statement of need
 
-Most of the plate tectonic models and reconstructions use the standalone GPlates software (@gurnisPlateTectonicReconstructions2012),
+Most of the plate tectonic models and reconstructions use the standalone GPlates software [@gurnisPlateTectonicReconstructions2012],
 which allows users to move plates in time steps and export geospatial data layers. These layers can later be used in 
-GIS software, such as the QGIS plugin `TerraAntiqua` (@aminovPaleogeographicReconstructionsUsing2023), to reconstruct 
-palaeotopography. Other models, such as PANALESIS (@verardPanalesisGlobalSynthetic2019a), are created and have processing functionalities that use commercial 
+GIS software, such as the QGIS plugin `TerraAntiqua` [@aminovPaleogeographicReconstructionsUsing2023], to reconstruct 
+palaeotopography. Other models, such as PANALESIS [@verardPanalesisGlobalSynthetic2019a], are created and have processing functionalities that use commercial 
 GIS software (ArcGIS). A preliminary version of the code to generate topography of the Earth based on PANALESIS past was developed 
 as an ArcGIS extension, written in Visual Basic .NET but never published. It is now fully updated as a QGIS plugin in 
 Python.
 
 Constraining the palaeotopography is critical in fields such as climate and mantle dynamics modelling, as the elevation 
-of land and bathymetry of oceans are used to set the initial conditions of models (@belloAssessingRoleSlab2015,
-@ragonAlternativeClimaticSteady2023). 
+of land and bathymetry of oceans are used to set the initial conditions of models [@belloAssessingRoleSlab2015,
+@ragonAlternativeClimaticSteady2023]. 
 Quantifying the Earth’s topography and its evolution also allows to estimate the volume of rocks being eroded, for instance 
-through sediment discharge (@lysterPredictingSedimentDischarges2020), as weathering or silicate rocks is a key controlling 
-factor of CO₂ concentration in the atmosphere over geological time scales (@molnarLateCenozoicUplift1990,
-@macdonaldArccontinentCollisionsTropics2019).
+through sediment discharge [@lysterPredictingSedimentDischarges2020], as weathering or silicate rocks is a key controlling 
+factor of CO₂ concentration in the atmosphere over geological time scales [@molnarLateCenozoicUplift1990,
+@macdonaldArccontinentCollisionsTropics2019].
 
-The traditional method to generate palaeotopographic maps is to take the present-day Earth topography of an area of 
-interest as it is, and rotate it back in time to its past location. This has limitations, including that present-day 
-features are the result of millions of years of plate movements and cannot be “copy-pasted”. Moreover, most of the models 
-on which these reconstructions are based only use a single-control approach, which does not provide time-consistent 
-reconstructions.
+The traditional method to create palaeotopographic maps [@scoteseAtlasPhanerozoicPaleogeographic2021b] is to use present-day
+geological evidence, rotate them back to their past location and derive semi-quantitative elevation typical of the environment the depict.
+Another method is to take the present-day Earth topography of an area of 
+interest as it is, and rotate it back in time to its past location [@aminovPaleogeographicReconstructionsUsing2023]. 
+These methods have limitations, including that present-day features are the result of millions of years of plate movements and 
+cannot be “copy-pasted” as such, and that one time step might not be coherent with the previous and next ones.
 
-We provide here an open-source plugin to reconstruct palaeotopography and palaeogeography "from scratch". 
+We provide here an open-source plugin to reconstruct palaeotopography and palaeogeography "from scratch" using the
+PANALESIS model, which is based on present-day geological evidence and uses a dual-control approach, meaning that one
+reconstruction is based on the state of the Earth in the previous time-step, and influences the next step. 
 Synthetic values for elevations are generated in nodes (points) related to geological settings and based on their 
-present-day counterparts (@verardStatisticsEarthsTopography2017). The output maps of `TopoChronia` can be used for 
-modelling purposes and to reconstruct sea-level curves, over the Phanerozoic and beyond (@verard3DPalaeogeographicReconstructions2015)
+present-day counterparts [@verardStatisticsEarthsTopography2017]. The output maps of `TopoChronia` can be used for 
+modelling purposes and to reconstruct sea-level curves, over the Phanerozoic and beyond [@verard3DPalaeogeographicReconstructions2015]
 
 ## Functionalities
 
