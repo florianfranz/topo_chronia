@@ -47,7 +47,7 @@ sufficient information in terms of geological features to reconstruct a fully qu
 Most of the plate tectonic models and reconstructions use the standalone GPlates software [@gurnisPlateTectonicReconstructions2012],
 which allows users to move plates in time steps and export geospatial data layers. These layers can later be used in 
 GIS software, such as the QGIS plugin `TerraAntiqua` [@aminovPaleogeographicReconstructionsUsing2023], to reconstruct 
-palaeotopography. Other models, such as PANALESIS [@verardPanalesisGlobalSynthetic2019a], are created and have processing functionalities that use commercial 
+palaeotopography. Other models such as PANALESIS [@verardPanalesisGlobalSynthetic2019a], are created and have processing functionalities that use commercial 
 GIS software (ArcGIS). A preliminary version of the code to generate topography of the Earth based on PANALESIS past was developed 
 as an ArcGIS extension, written in Visual Basic .NET but never published. It is now fully updated as a QGIS plugin in 
 Python.
@@ -57,7 +57,7 @@ of land and bathymetry of oceans are used to set the initial conditions of model
 @ragonAlternativeClimaticSteady2023]. 
 Quantifying the Earth’s topography and its evolution also allows to estimate the volume of rocks being eroded, for instance 
 through sediment discharge [@lysterPredictingSedimentDischarges2020], as weathering or silicate rocks is a key controlling 
-factor of CO₂ concentration in the atmosphere over geological time scales [@molnarLateCenozoicUplift1990;
+factor of CO2 concentration in the atmosphere over geological time scales [@molnarLateCenozoicUplift1990;
 @macdonaldArccontinentCollisionsTropics2019].
 
 The traditional method to create palaeotopographic maps [@scoteseAtlasPhanerozoicPaleogeographic2021b] is to use present-day
