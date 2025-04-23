@@ -26,4 +26,4 @@ jobs:
         uses: EndBug/add-and-commit@v9
         with:
           message: '(auto) Paper PDF Draft'
-          add: 'paper.pdf'
+          add: 'paper/paper.pdf'
