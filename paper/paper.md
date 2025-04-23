@@ -78,28 +78,32 @@ modelling purposes and to reconstruct sea-level curves, over the Phanerozoic and
 
 `TopoChronia` is divided into three main parts:
 
-1. Check Configuration  
-   a. Assess input data files (geometry, field names, values)  
-   b. Perform manual corrections if necessary, for wrongly named fields  
-   c. Define output folder path  
-   d. Extract available reconstruction ages  
+1. Check Configuration
+  - Assess input data files (geometry, field names, values)
+  - Perform manual corrections if necessary, for wrongly named fields
+  - Define output folder path
+  - Extract available reconstruction ages  
 
 2. Create Node Grid  
-   a. Select input lines from plate model file  
-   b. Convert mid-oceanic ridge and isochron features and interpolate a preliminary raster for oceans  
-   c. Convert all other features (abandoned arcs, continents, cratons, lower subduction, upper subduction, passive margin wedges,  
-      continent sides, hot-spots, other margins, rifts, and collision zones)  
-   d. Merge all nodes and clean to avoid clashing between features  
+  - Select input lines from plate model file
+  - Convert mid-oceanic ridge and isochron features and interpolate a preliminary raster for oceans
+  - Convert all other features (abandoned arcs, continents, cratons, lower subduction, upper subduction, passive margin wedges,  
+      continent sides, hot-spots, other margins, rifts, and collision zones)
+  - Merge all nodes and clean to avoid clashing between features  
 
-3. Interpolate to Raster  
-   a. Interpolate global raster  
-   b. Calculate oceanic volume under sea-level (elevation below 0m)  
-   c. Calculate required sea-level increase to match present-day oceanic volume  
-   d. Correct water load using Airy's model to adjust for sea-level increase  
-   e. Perform final raster interpolation with new sea-level  
+3. Interpolate to Raster
+  - Interpolate global raster
+  - Calculate oceanic volume under sea-level (elevation below 0m)
+  - Calculate required sea-level increase to match present-day oceanic volume
+  - Correct water load using Airy's model to adjust for sea-level increase
+  - Perform final raster interpolation with new sea-level  
 
-Each reconstruction will yield a palaeogeographic map alongside a text file summarizing sea-level information such as 
-initial volume and area, added water column, sea-level increase and subsidence.
+Each reconstruction will yield the following outputs:
+- A palaeogeographic map in geotiff format with cylindrical equal-area projection (ESRI:54034): `raster_final_filled_{age}.tif`
+- A text file summarizing sea-level information **before** water load correction (initial volume and area, added water column, sea-level increase and subsidence): `water_load_correction_summary.txt`
+- A text file summarizing sea-level information **after** water load correction: `water_load_correction_summary_f.txt`
+- All nodes both in EPSG:4326 and ESRI:54034 projections: `all_nodes_{age}.geojson` and `reproj_all_nodes_{age}.geojson` 
+- All other processing products from line to points for each setting.
 
 
 ## Acknowledgements
