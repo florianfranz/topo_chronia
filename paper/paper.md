@@ -1,5 +1,5 @@
 ---
-title: 'TopoChronia: A QGIS Plugin to Create Topographic and Geographic Maps of the Earth Geological Past from the PANALESIS Plate Tectonic Model'
+title: 'TopoChronia: A QGIS plugin for the creation of fully quantified palaeogeographic maps'
 tags:
   - Python
   - QGIS
@@ -78,15 +78,28 @@ modelling purposes and to reconstruct sea-level curves, over the Phanerozoic and
 
 `TopoChronia` is divided into three main parts:
 
-1.	Check Configuration → Assesses the input data files (geometry, fields, values) and allow manual corrections if 
-necessary.
-2.	Create Node Grid → Converts input data (lines and polygons) into points containing elevation values, based on the 
-age of various types of geological settings, including mid-oceanic ridges, 
-isochrons, abandoned arcs, continents, cratons, lower subduction, upper subduction, passive margin wedges and continents 
-sides, hot-spots, other margins, rifts and collision zones. Once processed, all nodes are merged and cleaned to avoid
-clashing between features.
-3.	Interpolate to Raster → Creates a raster layer by interpolating the elevation values form the nodes, including 
-post-processing steps such as correcting for water load added to match the reference volume.
+1. Check Configuration  
+   a. Assess input data files (geometry, field names, values)  
+   b. Perform manual corrections if necessary, for wrongly named fields  
+   c. Define output folder path  
+   d. Extract available reconstruction ages  
+
+2. Create Node Grid  
+   a. Select input lines from plate model file  
+   b. Convert mid-oceanic ridge and isochron features and interpolate a preliminary raster for oceans  
+   c. Convert all other features (abandoned arcs, continents, cratons, lower subduction, upper subduction, passive margin wedges,  
+      continent sides, hot-spots, other margins, rifts, and collision zones)  
+   d. Merge all nodes and clean to avoid clashing between features  
+
+3. Interpolate to Raster  
+   a. Interpolate global raster  
+   b. Calculate oceanic volume under sea-level (elevation below 0m)  
+   c. Calculate required sea-level increase to match present-day oceanic volume  
+   d. Correct water load using Airy's model to adjust for sea-level increase  
+   e. Perform final raster interpolation with new sea-level  
+
+Each reconstruction will yield a palaeogeographic map alongside a text file summarizing sea-level information such as 
+initial volume and area, added water column, sea-level increase and subsidence.
 
 
 ## Acknowledgements
