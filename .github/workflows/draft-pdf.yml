@@ -16,12 +16,12 @@ jobs:
         uses: openjournals/openjournals-draft-action@master
         with:
           journal: joss
-          paper-path: paper.md
+          paper-path: paper/paper.md
       - name: Upload
         uses: actions/upload-artifact@v4
         with:
           name: paper
-          path: paper.pdf
+          path: paper/paper.pdf
       - name: Commit PDF to repository
         uses: EndBug/add-and-commit@v9
         with:
