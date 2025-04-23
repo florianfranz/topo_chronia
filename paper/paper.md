@@ -99,12 +99,12 @@ modelling purposes and to reconstruct sea-level curves, over the Phanerozoic and
   - Perform final raster interpolation with new sea-level  
 
 Each reconstruction will yield the following outputs:
+
 - A palaeogeographic map in geotiff format with cylindrical equal-area projection (ESRI:54034): `raster_final_filled_{age}.tif`
 - A text file summarizing sea-level information **before** water load correction (initial volume and area, added water column, sea-level increase and subsidence): `water_load_correction_summary.txt`
 - A text file summarizing sea-level information **after** water load correction: `water_load_correction_summary_f.txt`
 - All nodes both in EPSG:4326 and ESRI:54034 projections: `all_nodes_{age}.geojson` and `reproj_all_nodes_{age}.geojson` 
 - All other processing products from line to points for each setting.
-
 
 ## Acknowledgements
 
