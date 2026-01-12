@@ -4,10 +4,8 @@ from qgis.core import QgsProject, Qgis, edit, QgsRasterLayer, QgsCoordinateRefer
 from qgis.PyQt.QtCore import QVariant
 
 from ...base_tools import BaseTools
-base_tools = BaseTools()
 
 class SeaLevel:
-    output_folder_path = base_tools.get_layer_path("Output Folder")
     APPEARANCE = "APPEARANCE"
     old_TM_oceanic_volume_ref = -1333639062341560000
     PARAM_SL_OceanicVolume = -1336303570654071600 #Raster surface volume of ETOPO 2022 Ice Surface below z=0 (outside continents).
@@ -19,8 +17,9 @@ class SeaLevel:
     etopo_volume = -1336642930960120000 #Raster surface volume of ETOPO 2022 Ice Surface for entire Earth below z=0.
     etopo_area = 510061060208755 #Earth surface are in square meters
 
-    def __init__(self):
-        pass
+    def __init__(self, base_tools: BaseTools):
+        self.base_tools = base_tools
+        self.output_folder_path = self.base_tools.get_layer_path("Output Folder")
 
     def calculate_volume(self,age,z,count):
         """
@@ -111,7 +110,7 @@ class SeaLevel:
 
 
     def update_all_nodes_wlc_newest(self, z_full_volume,age):
-        output_folder_path = base_tools.get_layer_path("Output Folder")
+        output_folder_path = self.base_tools.get_layer_path("Output Folder")
         all_nodes_layer_path = os.path.join(output_folder_path, f"reproj_all_nodes_{int(age)}.geojson")
         rho_m = 3300
         rho_w = 1027

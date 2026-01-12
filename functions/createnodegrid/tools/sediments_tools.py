@@ -1,15 +1,16 @@
 from ...base_tools import BaseTools
-base_tools = BaseTools()
 
 from ..tools.feature_conversion_tools import FeatureConversionTools
-feature_conversion_tools = FeatureConversionTools()
+
 
 class SEDConversionTools:
-    output_folder_path = base_tools.get_layer_path("Output Folder")
     APPEARANCE = "APPEARANCE"
 
-    def __init__(self):
-            pass
+    def __init__(self, base_tools: BaseTools):
+        self.base_tools = base_tools
+        self.output_folder_path = self.base_tools.get_layer_path("Output Folder")
+        self.feature_conversion_tools = FeatureConversionTools(self.base_tools)
+
     def abyssal_sediments(self, age, feature_abs_age):
         """
             Return abyssal sediment thickness according to the age of the feature relative to the age of the reconstruction.

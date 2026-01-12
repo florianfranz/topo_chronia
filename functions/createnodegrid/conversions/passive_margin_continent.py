@@ -3,25 +3,23 @@ import json
 import math
 from qgis.core import (Qgis, edit, QgsVectorLayer, QgsFeatureRequest, QgsRasterLayer, QgsMessageLog, QgsField,
                        QgsVectorFileWriter, QgsGeometry, QgsPointXY, QgsFeature, QgsProject, QgsSpatialIndex)
+
 from ...base_tools import BaseTools
-base_tools = BaseTools()
-
 from ..tools.passive_margin_tools import PMConversionTools
-pm_tools = PMConversionTools()
-
 from ..tools.sediments_tools import SEDConversionTools
-sed_tools = SEDConversionTools()
-
 from ..tools.feature_conversion_tools import FeatureConversionTools
-feature_conversion_tools = FeatureConversionTools()
+
 
 class PMCConversion:
-    continent_polygons_path = base_tools.get_layer_path("Continent Polygons")
-    continent_polygons_layer = QgsVectorLayer(continent_polygons_path, "Continent Polygons", 'ogr')
-    output_folder_path = base_tools.get_layer_path("Output Folder")
+    def __init__(self, base_tools: BaseTools):
+        self.base_tools = base_tools
+        self.output_folder_path = self.base_tools.get_layer_path("Output Folder")
+        self.continent_polygons_path = self.base_tools.get_layer_path("Continent Polygons")
+        self.continent_polygons_layer = QgsVectorLayer(self.continent_polygons_path, "Continent Polygons", "ogr")
+        self.pm_tools = PMConversionTools(self.base_tools)
+        self.feature_conversion_tools = FeatureConversionTools(self.base_tools)
+        self.sed_tools = SEDConversionTools(self.base_tools)
 
-    def __init__(self):
-        pass
     def passive_margin_continent_to_nodes(self,age):
         raster_prelim_path = os.path.join(self.output_folder_path, f"qgis_tin_raster_prelim_{int(age)}.tif")
         raster_prelim = QgsRasterLayer(raster_prelim_path, "Preliminary Raster")
@@ -31,12 +29,12 @@ class PMCConversion:
         field_idx_xc = PM_multipoints.fields().indexOf('X_CREST')
         field_idx_zr = PM_multipoints.fields().indexOf('Z_RASTER')
         field_idx_xmax = PM_multipoints.fields().indexOf('X_MAX')
-        ridge_depth = feature_conversion_tools.get_ridge_depth(age)
+        ridge_depth = self.feature_conversion_tools.get_ridge_depth(age)
         with edit(PM_multipoints):
             for feature in PM_multipoints.getFeatures():
                 feature_age = feature.attribute("FEAT_AGE")
-                z_crest = pm_tools.crest_y_passive_margin(age, feature_age)
-                x_crest = pm_tools.crest_x_passive_margin(feature_age)
+                z_crest = self.pm_tools.crest_y_passive_margin(age, feature_age)
+                x_crest = self.pm_tools.crest_x_passive_margin(feature_age)
                 PM_multipoints.changeAttributeValue(feature.id(), field_idx_zc, float(z_crest))
                 PM_multipoints.changeAttributeValue(feature.id(), field_idx_xc, float(x_crest))
                 geom = feature.geometry()
@@ -52,7 +50,7 @@ class PMCConversion:
                     if raster_depth < -5500:
                         raster_depth = -5500
                 PM_multipoints.changeAttributeValue(feature.id(), field_idx_zr, raster_depth)
-                length = -pm_tools.wedge_x_pm_new(feature_age) * 100  # Multiply by a 100 to convert from degrees to km
+                length = -self.pm_tools.wedge_x_pm_new(feature_age) * 100  # Multiply by a 100 to convert from degrees to km
                 x_max = -length
                 PM_multipoints.changeAttributeValue(feature.id(), field_idx_xmax, x_max)
         PM_multipoints.commitChanges()
@@ -82,15 +80,15 @@ class PMCConversion:
                         point2 = multi_point[i - 1]
                         flag = 1
                     feature = QgsFeature()
-                    profile_geometry = feature_conversion_tools.create_profile(point1,point2,x_min,x_max,step_length, flag, "inverse")
+                    profile_geometry = self.feature_conversion_tools.create_profile(point1,point2,x_min,x_max,step_length, flag, "inverse")
                     if profile_geometry:
-                        cont_included_profile_geometry = feature_conversion_tools.cut_profile_spi(profile_geometry,
+                        cont_included_profile_geometry = self.feature_conversion_tools.cut_profile_spi(profile_geometry,
                                                                                                   self.continent_polygons_layer,
                                                                                                   "keep inside",
                                                                                                   "positive", age,
                                                                                                   False)
                         if cont_included_profile_geometry:
-                            final_profile_geometry = feature_conversion_tools.check_profile_intersection(cont_included_profile_geometry,
+                            final_profile_geometry = self.feature_conversion_tools.check_profile_intersection(cont_included_profile_geometry,
                                                                                                          spatial_index_profiles,
                                                                                                          geometry_dict_profiles)
 
@@ -115,9 +113,9 @@ class PMCConversion:
             z_crest = float(profile.attribute("Z_CREST"))
             plate = profile.attribute('PLATE')
             feature_age = profile.attribute("FEAT_AGE")
-            x_wedge = pm_tools.wedge_x_pm_new(feature_age)
-            y_wedge = pm_tools.wedge_y_pm_new(feature_age)
-            ridge_depth = feature_conversion_tools.get_ridge_depth(age)
+            x_wedge = self.pm_tools.wedge_x_pm_new(feature_age)
+            y_wedge = self.pm_tools.wedge_y_pm_new(feature_age)
+            ridge_depth = self.feature_conversion_tools.get_ridge_depth(age)
             raster_depth = float(profile.attribute('Z_RASTER'))
             geom = profile.geometry()
             continent_y = 240.38
@@ -125,11 +123,11 @@ class PMCConversion:
             feat_start_point = multi_point[0]
             for point in multi_point:
                 coords = [point[0], point[1]]
-                distance = float(feature_conversion_tools.prod_scal(feat_start_point,1,point,1))
+                distance = float(self.feature_conversion_tools.prod_scal(feat_start_point,1,point,1))
                 if distance == 0:
                     pass # As we already have nodes at feature line position from the passive margin wedge, we skip it here.
                 else:
-                    z = pm_tools.passive_margin_profile_clean(distance, feature_age, raster_depth, ridge_depth, y_wedge,x_wedge, z_crest, x_crest, continent_y)
+                    z = self.pm_tools.passive_margin_profile_clean(distance, feature_age, raster_depth, ridge_depth, y_wedge,x_wedge, z_crest, x_crest, continent_y)
                     geojson_point_feature = {
                         "type": "Feature",
                         "properties": {
@@ -153,5 +151,5 @@ class PMCConversion:
                 "features": all_points_features
             }, indent=2))
         #feature_conversion_tools.check_point_plate_intersection(age, "PMC")
-        feature_conversion_tools.add_id_nodes_setting(output_points_layer_path)
+        self.feature_conversion_tools.add_id_nodes_setting(output_points_layer_path)
         #feature_conversion_tools.add_layer_to_group(output_points_layer_path, f"{int(age)} Ma", "PMC")

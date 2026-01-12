@@ -3,24 +3,33 @@ import processing
 from qgis.core import QgsVectorLayer,QgsFeatureRequest,QgsMessageLog, Qgis,QgsProject, QgsProcessingException
 
 from ...base_tools import BaseTools
-base_tools = BaseTools()
+from .feature_conversion_tools import FeatureConversionTools
 
 
 class PreRasterTools:
-    output_folder_path = base_tools.get_layer_path("Output Folder")
-    plate_polygons_path = base_tools.get_layer_path("Plate Polygons")
-    plate_polygons_layer = QgsVectorLayer(plate_polygons_path, "Plate Polygons", 'ogr')
     APPEARANCE = "APPEARANCE"
     PLATE = "PLATE"
 
-    def __init__(self):
-        pass
+    def __init__(self, base_tools: BaseTools):
+        self.base_tools = base_tools
+        self.output_folder_path = self.base_tools.get_layer_path("Output Folder")
+        self.plate_polygons_path = self.base_tools.get_layer_path("Plate Polygons")
+        self.plate_polygons_layer = QgsVectorLayer(self.plate_polygons_path, "Plate Polygons", 'ogr')
+        self.feature_conversion_tools = FeatureConversionTools(self.base_tools)
 
     def generate_temporary_raster_plate_by_plate(self, age):
         """
         Generates the preliminary raster based on the all nodes layer,
         comprising only RID + ISO nodes.
         """
+        if age == 518:
+            self.feature_conversion_tools.move_nodes_slightly(age)
+            self.feature_conversion_tools.move_nodes_slightly(age)
+            self.feature_conversion_tools.move_nodes_slightly(age)
+            """feature_conversion_tools.move_nodes_slightly(age)
+            feature_conversion_tools.move_nodes_slightly(age)"""
+
+
         nodes_layer_path = os.path.join(self.output_folder_path,
                                         f"all_nodes_{int(age)}.geojson")
 
@@ -34,24 +43,49 @@ class PreRasterTools:
             self.plate_polygons_layer.getFeatures(QgsFeatureRequest().setFilterExpression(plate_filter)))
         for plate in plate_features:
             if plate.geometry().isEmpty():
+                QgsMessageLog.logMessage("Empty geometry", "Create Node Grid", Qgis.Warning)
                 pass
             else:
                 plate_name_or = plate.attribute("PLATE")
 
                 # Rename specific plates
                 plate_name_mappings = {
+                    # Your existing mappings (some corrected)
                     "Nazca": "NAZ",
                     "Tong_Ker": "TONGA_KER",
                     "Fiji_N": "FIDJI_N",
                     "Fiji_E": "FIDJI_E",
-                    "Fiji_W": "FIDJI_W",
+                    "Fjij_W": "FIDJI_W",  # Note: Your polygon has "Fjij_W" (typo?)
                     "Carolina": "CAROLINE",
                     "India": "IND",
                     "Easter": "EAST",
-                    "Gondwana": "GOND",
-                    "NixonFord": "NIXFORD",
-                    "Sinti-Holo": "SINTIHOLO",
-                    "Laurentia": "LAURUSSIA"
+                    "Eurasia": "EURASIA",
+                    "Aus": "AUS",
+                    "Afri": "AFRI",
+                    "Ant": "ANT",
+                    "NAm": "NAM",
+                    "SAm": "SAM",
+                    "Pac": "PAC",
+                    "Phil": "PHIL",
+                    "Arab": "ARAB",
+                    "Carib": "CARIB",
+                    "Coco": "COCO",
+                    "Juan": "JUAN",
+                    "Rivera": "RIVERA",
+                    "Panama": "PANAMA",
+                    "Andaman": "ANDAMAN",
+                    "Molucca": "MOLUCCA",
+                    "Banda": "BANDA",
+                    "Woodlark": "WOODLARK",
+                    "Marianas": "MARIANAS",
+                    "Davao": "DAVAO",
+                    "Turkish": "TURKISH",
+                    "Scotia": "SCOTIA",
+                    "Snow": "SNOW",
+                    "SSI": "SSI",
+                    "Bismarck": "BISMARCK",
+                    "New_Britain": "NEW_BRITAIN",
+                    "Calabria": "CALABRIA",
                 }
 
                 plate_name = plate_name_mappings.get(plate_name_or,
@@ -62,6 +96,7 @@ class PreRasterTools:
 
                 # **First Condition:** Select nodes where PLATE = plate_name
                 plate_name_filter = f"{self.PLATE} = '{plate_name}'"
+                QgsMessageLog.logMessage(f"Selected PLATE")
                 nodes_plate = list(nodes_layer.getFeatures(QgsFeatureRequest().setFilterExpression(plate_name_filter)))
 
                 # **Second Condition:** Select nodes where PLATE = "Z_DEM" AND they intersect the plate polygon
@@ -226,4 +261,3 @@ class PreRasterTools:
             'MASK_LAYER': None,
             'OPTIONS': '', 'EXTRA': '',
             'OUTPUT': qgis_tin_output_raster_path})
-

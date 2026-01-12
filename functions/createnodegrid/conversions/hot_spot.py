@@ -7,21 +7,24 @@ from qgis.core import (Qgis, edit, QgsVectorLayer, QgsFeatureRequest, QgsMessage
                        QgsWkbTypes)
 
 from ...base_tools import BaseTools
-base_tools = BaseTools()
 
 from ..tools.hot_spot_tools import HOTConversionTools
-hot_tools = HOTConversionTools()
-
 from ..tools.feature_conversion_tools import FeatureConversionTools
-feature_conversion_tools = FeatureConversionTools()
+
 
 class HOTConversion:
-    continent_polygons_path = base_tools.get_layer_path("Continent Polygons")
-    continent_polygons_layer = QgsVectorLayer(continent_polygons_path, "Continent Polygons", 'ogr')
-    output_folder_path = base_tools.get_layer_path("Output Folder")
     APPEARANCE = "APPEARANCE"
-    def __init__(self):
-        pass
+
+    def __init__(self, base_tools: BaseTools):
+        self.base_tools = base_tools
+        self.output_folder_path = self.base_tools.get_layer_path("Output Folder")
+        self.continent_polygons_path = self.base_tools.get_layer_path("Continent Polygons")
+        self.continent_polygons_layer = QgsVectorLayer(
+            self.continent_polygons_path, "Continent Polygons", "ogr"
+        )
+        self.hot_tools = HOTConversionTools(self.base_tools)
+        self.feature_conversion_tools = FeatureConversionTools(self.base_tools)
+
     def hot_spot_to_nodes(self,age):
         PARAM_GENERAL_CONTINENTZ = 240.38
         PARAM_HS_ContVolcanoZMin = 293 - PARAM_GENERAL_CONTINENTZ
@@ -29,7 +32,7 @@ class HOTConversion:
         raster_prelim_path = os.path.join(self.output_folder_path, f"qgis_tin_raster_prelim_{int(age)}.tif")
         raster_prelim = QgsRasterLayer(raster_prelim_path, "Preliminary Raster")
         hot_crest = 1500
-        ridge_depth = feature_conversion_tools.get_ridge_depth(age)
+        ridge_depth = self.feature_conversion_tools.get_ridge_depth(age)
         diss_polygon_layer_path = os.path.join(self.output_folder_path, f"HOT_polygons_{int(age)}_final.geojson")
         if not os.path.exists(diss_polygon_layer_path):
             return
@@ -68,7 +71,7 @@ class HOTConversion:
                     if intersects:
                         location = "Continental"
                         hot_volc_z = float(
-                            hot_tools.z_cont_hs(feature_age, PARAM_HS_ContVolcanoZMin, PARAM_HS_ContVolcanoZMax,
+                            self.hot_tools.z_cont_hs(feature_age, PARAM_HS_ContVolcanoZMin, PARAM_HS_ContVolcanoZMax,
                                                 ridge_depth))
                     else:
                         location = "Oceanic"
@@ -115,7 +118,7 @@ class HOTConversion:
                             y_coord = vertex.y()
                             coords = [x_coord, y_coord]
                             vertex_xy = QgsGeometry.fromPointXY(vertex)
-                            distance = feature_conversion_tools.prod_scal(centroid_point,1,vertex,1)
+                            distance = self.feature_conversion_tools.prod_scal(centroid_point,1,vertex,1)
                             intersects = False
                             candidate_ids = continent_spatial_index.intersects(vertex_xy.boundingBox())
                             if candidate_ids:
@@ -163,7 +166,7 @@ class HOTConversion:
                                     y_coord = vertex.y()
                                     coords = [x_coord, y_coord]
                                     vertex_xy = QgsGeometry.fromPointXY(vertex)
-                                    distance = feature_conversion_tools.prod_scal(centroid_point,1,vertex,1)
+                                    distance = self.feature_conversion_tools.prod_scal(centroid_point,1,vertex,1)
                                     intersects = False
                                     candidate_ids = continent_spatial_index.intersects(vertex_xy.boundingBox())
                                     if candidate_ids:
@@ -207,7 +210,7 @@ class HOTConversion:
                             y_coord = vertex.y()
                             coords = [x_coord, y_coord]
                             vertex_xy = QgsGeometry.fromPointXY(vertex)
-                            distance = feature_conversion_tools.prod_scal(centroid_point,1,vertex,1)
+                            distance = self.feature_conversion_tools.prod_scal(centroid_point,1,vertex,1)
                             candidate_ids = continent_spatial_index.intersects(vertex_xy.boundingBox())
                             intersects = False
                             if candidate_ids:
@@ -250,5 +253,5 @@ class HOTConversion:
                     "type": "FeatureCollection",
                     "features": all_HOT_features
                 }, indent=2))
-            feature_conversion_tools.add_id_nodes_setting(output_points_layer_path)
+            self.feature_conversion_tools.add_id_nodes_setting(output_points_layer_path)
             #feature_conversion_tools.add_layer_to_group(output_points_layer_path, f"{int(age)} Ma", "HOT")

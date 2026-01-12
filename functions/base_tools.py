@@ -3,19 +3,24 @@ import os
 import platform
 from qgis.core import Qgis, QgsVectorLayer, QgsRasterLayer, QgsProject, QgsMessageLog,QgsCoordinateReferenceSystem
 
-class BaseTools:
-    system_name = platform.system()
-    if system_name in ["Darwin", "Linux"]:
-        INPUT_FILE_PATH = os.path.expanduser("~/Desktop/input_files.txt")
-    else:
-        INPUT_FILE_PATH = "input_files.txt"
 
-    def __init__(self):
-        # Any initialization code goes here
-        pass
-    def get_layer_path(self,target_layer_name):
+class BaseTools:
+    def __init__(self, input_fc=None):
         """
-        Reads input file paths from the constant input file
+        Initialize BaseTools with optional input_fc dictionary.
+        If input_fc is provided, use it directly. Otherwise, read from file.
+        """
+        self.input_fc = input_fc
+
+        system_name = platform.system()
+        if system_name in ["Darwin", "Linux"]:
+            self.INPUT_FILE_PATH = os.path.expanduser("~/Desktop/input_files.txt")
+        else:
+            self.INPUT_FILE_PATH = "input_files.txt"
+
+    def get_layer_path(self, target_layer_name):
+        """
+        Reads input file paths from the input file
         """
         try:
             with open(self.INPUT_FILE_PATH, "r") as file:
@@ -23,17 +28,26 @@ class BaseTools:
         except FileNotFoundError:
             QgsMessageLog.logMessage(
                 "Input files not yet defined, please configure it in the 'Check Configuration' initial step.",
-                "Create Node Grid",
-                Qgis.Info
+                "Base Tools",
+                Qgis.Warning
             )
             return None
+
         target_layer_path = file_paths.get(target_layer_name)
 
         if target_layer_path:
-            print(f"Path to '{target_layer_name}': {target_layer_path}")
+            QgsMessageLog.logMessage(
+                f"Path to '{target_layer_name}': {target_layer_path}",
+                "Base Tools",
+                Qgis.Info
+            )
             return target_layer_path
         else:
-            print(f"Layer '{target_layer_name}' not found in the dictionary.")
+            QgsMessageLog.logMessage(
+                f"Layer '{target_layer_name}' not found in the dictionary.",
+                "Base Tools",
+                Qgis.Warning
+            )
             return None
 
     def get_relative_age(self, absolute_age):

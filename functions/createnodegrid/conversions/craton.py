@@ -4,20 +4,22 @@ from qgis.core import (Qgis, edit, QgsVectorLayer, QgsProject, QgsFeatureRequest
                        QgsPointXY, QgsGeometry, QgsFeature,QgsSpatialIndex)
 
 from ...base_tools import BaseTools
-base_tools = BaseTools()
 
 from ..tools.feature_conversion_tools import FeatureConversionTools
-feature_conversion_tools = FeatureConversionTools()
+
 
 class CRAConversion:
-    continent_polygons_path = base_tools.get_layer_path("Continent Polygons")
-    continent_polygons_layer = QgsVectorLayer(continent_polygons_path, "Continent Polygons", 'ogr')
-    geodesic_grid_path = base_tools.get_layer_path("Geodesic Grid")
-    geodesic_grid_layer = QgsVectorLayer(geodesic_grid_path, "Geodesic Grid", 'ogr')
-    output_folder_path = base_tools.get_layer_path("Output Folder")
     APPEARANCE = "APPEARANCE"
-    def __init__(self):
-        pass
+    def __init__(self, base_tools: BaseTools):
+        self.base_tools = base_tools
+        self.output_folder_path = self.base_tools.get_layer_path("Output Folder")
+        self.continent_polygons_path = self.base_tools.get_layer_path("Continent Polygons")
+        self.continent_polygons_layer = QgsVectorLayer(self.continent_polygons_path, "Continent Polygons", "ogr")
+        self.geodesic_grid_path = self.base_tools.get_layer_path("Geodesic Grid")
+        self.geodesic_grid_layer = QgsVectorLayer(self.geodesic_grid_path, "Geodesic Grid", "ogr")
+        self.feature_conversion_tools = FeatureConversionTools(self.base_tools)
+
+
     def craton_to_nodes(self, age):
         crat_z_value = 500
         cont_z_value = 240.38
@@ -189,5 +191,5 @@ class CRAConversion:
                 "features": all_points_features
             }, indent=2))
         #feature_conversion_tools.check_point_plate_intersection(age, "CRA")
-        feature_conversion_tools.add_id_nodes_setting(output_points_layer_path)
+        self.feature_conversion_tools.add_id_nodes_setting(output_points_layer_path)
         #feature_conversion_tools.add_layer_to_group(output_points_layer_path, f"{int(age)} Ma", "CRA")

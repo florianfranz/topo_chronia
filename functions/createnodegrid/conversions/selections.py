@@ -7,32 +7,33 @@ from qgis.PyQt.QtCore import QVariant
 
 
 from ..tools.feature_conversion_tools import FeatureConversionTools
-feature_conversion_tools = FeatureConversionTools()
 
 from ...base_tools import BaseTools
-base_tools = BaseTools()
 
 from ..tools.sediments_tools import SEDConversionTools
-sed_tools = SEDConversionTools()
 
 from ..tools.rift_tools import RIBConversionTools
-rib_tools = RIBConversionTools()
 
-class LinesSelections():
-    plate_model_path = base_tools.get_layer_path("Plate Model")
-    plate_model_layer = QgsVectorLayer(plate_model_path, "Plate Model", 'ogr')
-    plate_polygons_path = base_tools.get_layer_path("Plate Polygons")
-    plate_polygons_layer = QgsVectorLayer(plate_polygons_path, "Plate Polygons", 'ogr')
-    continent_polygons_path = base_tools.get_layer_path("Continent Polygons")
-    continent_polygons_layer = QgsVectorLayer(continent_polygons_path, "Continent Polygons", 'ogr')
-    output_folder_path = base_tools.get_layer_path("Output Folder")
+
+class LinesSelections:
     APPEARANCE = "APPEARANCE"
     POSITION = "POSITION"
     TYPE = "TYPE"
     NAME_TERR = "NAME_TERR"
     AGE = "AGE"
-    def __init__(self):
-        pass
+
+    def __init__(self, base_tools: BaseTools):
+        self.base_tools = base_tools
+        self.output_folder_path = self.base_tools.get_layer_path("Output Folder")
+        self.plate_model_path = self.base_tools.get_layer_path("Plate Model")
+        self.plate_model_layer = QgsVectorLayer(self.plate_model_path, "Plate Model", "ogr")
+        self.plate_polygons_path = self.base_tools.get_layer_path("Plate Polygons")
+        self.plate_polygons_layer = QgsVectorLayer(self.plate_polygons_path, "Plate Polygons", "ogr")
+        self.continent_polygons_path = self.base_tools.get_layer_path("Continent Polygons")
+        self.continent_polygons_layer = QgsVectorLayer(self.continent_polygons_path, "Continent Polygons", "ogr")
+        self.feature_conversion_tools = FeatureConversionTools(self.base_tools)
+        self.sed_tools = SEDConversionTools(self.base_tools)
+        self.rib_tools = RIBConversionTools(self.base_tools)
 
     def select_lines(self,age):
         plate_filter = (
@@ -155,13 +156,13 @@ class LinesSelections():
                 feature_abs_age = feature.attribute('AGE')
                 feature_age = feature_abs_age - age
                 ridge_layer.changeAttributeValue(feature.id(), field_idx_fa, feature_age)
-                ridge_depth = feature_conversion_tools.get_ridge_depth(age=age)
+                ridge_depth = self.feature_conversion_tools.get_ridge_depth(age=age)
                 ridge_layer.changeAttributeValue(feature.id(), field_idx_rd, float(ridge_depth))
         ridge_layer.commitChanges()
         original_RID_lines_layer_path = os.path.join(self.output_folder_path, f"original_RID_lines_{int(age)}.geojson")
         QgsVectorFileWriter.writeAsVectorFormat(ridge_layer, original_RID_lines_layer_path, 'utf-8', ridge_layer.crs(),
                                                 "GeoJSON")
-        dens_RID_lines_layer_path = feature_conversion_tools.harmonize_lines_geometry(original_RID_lines_layer_path,
+        dens_RID_lines_layer_path = self.feature_conversion_tools.harmonize_lines_geometry(original_RID_lines_layer_path,
                                                                                       tolerance_value=1)
 
         #02: ISO
@@ -191,20 +192,20 @@ class LinesSelections():
                 feature_abs_age = feature.attribute('AGE')
                 feature_age = feature_abs_age - age
                 isochron_layer.changeAttributeValue(feature.id(), field_idx_fa, feature_age)
-                ridge_depth = feature_conversion_tools.get_ridge_depth(age)
-                z = feature_conversion_tools.PCM(feature_age, ridge_depth)
+                ridge_depth = self.feature_conversion_tools.get_ridge_depth(age)
+                z = self.feature_conversion_tools.PCM(feature_age, ridge_depth)
                 isochron_layer.changeAttributeValue(feature.id(), field_idx_z, float(z))
-                abys_sed = sed_tools.abyssal_sediments(age, feature_abs_age)
+                abys_sed = self.sed_tools.abyssal_sediments(age, feature_abs_age)
                 isochron_layer.changeAttributeValue(feature.id(), field_idx_as, float(abys_sed))
-                sed_thick = sed_tools.full_sediment_thickness(abys_sed)
+                sed_thick = self.sed_tools.full_sediment_thickness(abys_sed)
                 isochron_layer.changeAttributeValue(feature.id(), field_idx_st, float(sed_thick))
-                rho_sediments = sed_tools.rho_sed(sed_thick)
+                rho_sediments = self.sed_tools.rho_sed(sed_thick)
                 isochron_layer.changeAttributeValue(feature.id(), field_idx_rs, float(rho_sediments))
         isochron_layer.commitChanges()
         original_ISO_layer_path = os.path.join(self.output_folder_path, f"original_ISO_lines_{int(age)}.geojson")
         QgsVectorFileWriter.writeAsVectorFormat(isochron_layer, original_ISO_layer_path, 'utf-8', isochron_layer.crs(),
                                                 "GeoJSON")
-        dens_ISO_layer_path = feature_conversion_tools.harmonize_lines_geometry(original_ISO_layer_path,
+        dens_ISO_layer_path = self.feature_conversion_tools.harmonize_lines_geometry(original_ISO_layer_path,
                                                                                 tolerance_value=1)
 
         #03: SUB (LWS + UPS)
@@ -234,7 +235,7 @@ class LinesSelections():
         original_SUB_lines_layer_path = os.path.join(self.output_folder_path, f"original_SUB_lines_{int(age)}.geojson")
         QgsVectorFileWriter.writeAsVectorFormat(SUB_lines, original_SUB_lines_layer_path, 'utf-8', SUB_lines.crs(),
                                                 "GeoJSON")
-        dens_SUB_layer_path = feature_conversion_tools.harmonize_lines_geometry(original_SUB_lines_layer_path,
+        dens_SUB_layer_path = self.feature_conversion_tools.harmonize_lines_geometry(original_SUB_lines_layer_path,
                                                                                 tolerance_value=1)
         dens_SUB_lines = QgsVectorLayer(dens_SUB_layer_path, "Simplified SUB Lines", 'ogr')
         sub_multipoints = QgsVectorLayer("MultiPoint?crs=EPSG:4326", "Sub Multipoints", "memory")
@@ -279,7 +280,7 @@ class LinesSelections():
         original_ABA_lines_layer_path = os.path.join(self.output_folder_path, f"original_ABA_lines_{int(age)}.geojson")
         QgsVectorFileWriter.writeAsVectorFormat(ABA_lines, original_ABA_lines_layer_path, 'utf-8', ABA_lines.crs(),
                                                 "GeoJSON")
-        dens_ABA_layer_path = feature_conversion_tools.harmonize_lines_geometry(original_ABA_lines_layer_path,
+        dens_ABA_layer_path = self.feature_conversion_tools.harmonize_lines_geometry(original_ABA_lines_layer_path,
                                                                                 tolerance_value=1)
 
         #05: PM (PMW + PMC)
@@ -308,7 +309,7 @@ class LinesSelections():
         original_PM_lines_layer_path = os.path.join(self.output_folder_path, f"original_PM_lines_{int(age)}.geojson")
         QgsVectorFileWriter.writeAsVectorFormat(PM_lines, original_PM_lines_layer_path, 'utf-8', PM_lines.crs(),
                                                 "GeoJSON")
-        dens_PM_layer_path = feature_conversion_tools.harmonize_lines_geometry(original_PM_lines_layer_path,
+        dens_PM_layer_path = self.feature_conversion_tools.harmonize_lines_geometry(original_PM_lines_layer_path,
                                                                                tolerance_value=1)
         dens_PM_lines = QgsVectorLayer(dens_PM_layer_path, "Dens PM Lines", 'ogr')
         PM_multipoints = QgsVectorLayer("MultiPoint?crs=EPSG:4326", "PM_multipoints", "memory")
@@ -387,12 +388,12 @@ class LinesSelections():
                                                field_idx_fa,
                                                feature_age)
 
-                z_crest = float(rib_tools.crest_y_rift(age, feature_age))
+                z_crest = float(self.rib_tools.crest_y_rift(age, feature_age))
                 RIB_lines.changeAttributeValue(feature.id(),
                                                field_idx_zc,
                                                z_crest)
 
-                through_y_rift = float(rib_tools.through_y_rift(age,
+                through_y_rift = float(self.rib_tools.through_y_rift(age,
                                                                 feature_age))
                 RIB_lines.changeAttributeValue(feature.id(),
                                                field_idx_tyr,
@@ -402,7 +403,7 @@ class LinesSelections():
                                                      f"original_RIB_lines_{int(age)}.geojson")
         QgsVectorFileWriter.writeAsVectorFormat(RIB_lines, original_RIB_lines_layer_path, 'utf-8', RIB_lines.crs(),
                                                 "GeoJSON")
-        dens_RIB_layer_path = feature_conversion_tools.harmonize_lines_geometry(original_RIB_lines_layer_path,
+        dens_RIB_layer_path = self.feature_conversion_tools.harmonize_lines_geometry(original_RIB_lines_layer_path,
                                                                                 tolerance_value=1)
         dens_RIB_layer = QgsVectorLayer(dens_RIB_layer_path, "Densified RIB lines", "ogr")
         all_polygons = []
@@ -493,7 +494,7 @@ class LinesSelections():
         original_CRA_layer_path = os.path.join(self.output_folder_path, f"original_CRA_lines_{int(age)}.geojson")
         QgsVectorFileWriter.writeAsVectorFormat(CRA_lines_layer, original_CRA_layer_path, 'utf-8',
                                                 CRA_lines_layer.crs(), "GeoJSON")
-        dens_CRA_layer_path = feature_conversion_tools.harmonize_lines_geometry(original_CRA_layer_path,
+        dens_CRA_layer_path = self.feature_conversion_tools.harmonize_lines_geometry(original_CRA_layer_path,
                                                                                 tolerance_value=1)
         dens_CRA_layer = QgsVectorLayer(dens_CRA_layer_path, "Densified CRA Lines", "ogr")
         all_craton_polygons = []
@@ -560,7 +561,7 @@ class LinesSelections():
         original_otm_lines_layer_path = os.path.join(self.output_folder_path, f"original_OTM_lines_{int(age)}.geojson")
         QgsVectorFileWriter.writeAsVectorFormat(OTM_lines, original_otm_lines_layer_path, 'utf-8', OTM_lines.crs(),
                                                 "GeoJSON")
-        dens_OTM_layer_path = feature_conversion_tools.harmonize_lines_geometry(original_otm_lines_layer_path,
+        dens_OTM_layer_path = self.feature_conversion_tools.harmonize_lines_geometry(original_otm_lines_layer_path,
                                                                                 tolerance_value=1)
 
         #09: COL
@@ -590,7 +591,7 @@ class LinesSelections():
         original_COL_lines_layer_path = os.path.join(self.output_folder_path, f"original_COL_lines_{int(age)}.geojson")
         QgsVectorFileWriter.writeAsVectorFormat(COL_lines, original_COL_lines_layer_path, 'utf-8', COL_lines.crs(),
                                                 "GeoJSON")
-        dens_COL_layer_path = feature_conversion_tools.harmonize_lines_geometry(original_COL_lines_layer_path,
+        dens_COL_layer_path = self.feature_conversion_tools.harmonize_lines_geometry(original_COL_lines_layer_path,
                                                                                 tolerance_value=1)
 
 
@@ -621,7 +622,7 @@ class LinesSelections():
         original_HOT_layer_path = os.path.join(self.output_folder_path, f"original_HOT_lines_{int(age)}.geojson")
         QgsVectorFileWriter.writeAsVectorFormat(HOT_lines_layer, original_HOT_layer_path, 'utf-8',
                                                 HOT_lines_layer.crs(), "GeoJSON")
-        dens_HOT_lines_layer_path = feature_conversion_tools.harmonize_lines_geometry(original_HOT_layer_path,
+        dens_HOT_lines_layer_path = self.feature_conversion_tools.harmonize_lines_geometry(original_HOT_layer_path,
                                                                                 tolerance_value=0.5)
         dens_HOT_layer = QgsVectorLayer(dens_HOT_lines_layer_path, "Densified HOT layer", "ogr")
         HOT_features = list(dens_HOT_layer.getFeatures())
