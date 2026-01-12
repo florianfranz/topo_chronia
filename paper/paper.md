@@ -72,7 +72,7 @@ PANALESIS model, which is based on present-day geological evidence and uses a du
 reconstruction is based on the state of the Earth in the previous time-step, and influences the next step. 
 Synthetic values for elevations are generated in nodes (points) related to geological settings and based on their 
 present-day counterparts [@verard2017]. The output maps of `TopoChronia` can be used for 
-modelling purposes and to reconstruct sea-level curves, over the Phanerozoic and beyond [@verard2015;franziskakis2025a].
+modelling purposes and to reconstruct sea-level curves, over the Phanerozoic and beyond [@verard2015;@franziskakis2025a].
 
 ## Functionalities
 
