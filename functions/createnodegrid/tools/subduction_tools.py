@@ -2,17 +2,19 @@ import math
 from qgis.core import Qgis, QgsMessageLog
 
 from ...base_tools import BaseTools
-base_tools = BaseTools()
 
 from ..tools.feature_conversion_tools import FeatureConversionTools
-feature_conversion_tools = FeatureConversionTools()
+
+
 
 class SUBConversionTools:
-    output_folder_path = base_tools.get_layer_path("Output Folder")
     APPEARANCE = "APPEARANCE"
 
-    def __init__(self):
-        pass
+    def __init__(self, base_tools: BaseTools):
+        self.base_tools = base_tools
+        self.output_folder_path = self.base_tools.get_layer_path("Output Folder")
+        self.feature_conversion_tools = FeatureConversionTools(self.base_tools)
+
 
     def subduction_profile(self, setting, distance, ridge_depth, raster_depth, z_up_plate, lat_distance):
 
@@ -78,8 +80,8 @@ class SUBConversionTools:
             QgsMessageLog.logMessage(f"Setting is not of proper type. Value is {setting}", "Create Node Grid",
                                      Qgis.Info)
 
-        PCM_min = feature_conversion_tools.PCM(0, ridge_depth)
-        PCM_max = feature_conversion_tools.PCM(4567, ridge_depth)
+        PCM_min = self.feature_conversion_tools.PCM(0, ridge_depth)
+        PCM_max = self.feature_conversion_tools.PCM(4567, ridge_depth)
         A = (1 - 0) / (PCM_min - PCM_max)
         B = 0 - A * PCM_max
         PCM_norm = A * raster_depth + B
@@ -97,11 +99,11 @@ class SUBConversionTools:
         B = pBulgeYMin
         GaussFactor2 = A * PCM_norm + B
 
-        PCM_trench_y = feature_conversion_tools.PCM(0 * PARAM_AM_C_FFLEX, ridge_depth)
-        PCM_oc_y = feature_conversion_tools.PCM(pProfileLength * PARAM_AM_C_FFLEX, ridge_depth)
+        PCM_trench_y = self.feature_conversion_tools.PCM(0 * PARAM_AM_C_FFLEX, ridge_depth)
+        PCM_oc_y = self.feature_conversion_tools.PCM(pProfileLength * PARAM_AM_C_FFLEX, ridge_depth)
         A = (1 - 0) / (PCM_trench_y - PCM_oc_y)
         B = 0 - A * PCM_oc_y
-        PCM_up_norm = A * feature_conversion_tools.PCM(GaussMean1 * PARAM_AM_C_FFLEX, ridge_depth) + B
+        PCM_up_norm = A * self.feature_conversion_tools.PCM(GaussMean1 * PARAM_AM_C_FFLEX, ridge_depth) + B
 
         A = (pCurvMax - pCurvMin) / (1 - 0)
         B = pCurvMin
@@ -137,7 +139,7 @@ class SUBConversionTools:
 
         A = (1 - 0) / (PCM_trench_y - PCM_oc_y)
         B = 0 - A * PCM_oc_y
-        PCM_N = A * feature_conversion_tools.PCM(distance * PARAM_AM_C_FFLEX, ridge_depth) + B
+        PCM_N = A * self.feature_conversion_tools.PCM(distance * PARAM_AM_C_FFLEX, ridge_depth) + B
 
         z = (-exp_trench * exp_z) + (GaussFactor1 * Gauss1) + (GaussFactor2 * Gauss2) + (
                     up_trench_depth * PCM_N) + z_up_plate

@@ -2,17 +2,18 @@ import random
 import math
 
 from ...base_tools import BaseTools
-base_tools = BaseTools()
 
 from ..tools.feature_conversion_tools import FeatureConversionTools
-feature_conversion_tools = FeatureConversionTools()
+
 
 class COLConversionTools:
-    output_folder_path = base_tools.get_layer_path("Output Folder")
     APPEARANCE = "APPEARANCE"
 
-    def __init__(self):
-        pass
+    def __init__(self, base_tools: BaseTools):
+        self.base_tools = base_tools
+        self.output_folder_path = self.base_tools.get_layer_path("Output Folder")
+        self.feature_conversion_tools = FeatureConversionTools(self.base_tools)
+
     def collision_profile(self, feature_age, distance, front_x_young, shift, ridge_depth, z_up_plate):
         pRand = random.Random()
         random_number = pRand.random()
@@ -41,7 +42,7 @@ class COLConversionTools:
         PARAM_CZ_C2_FCURV = 1
         PARAM_CZ_C2_FPCM = -1500
 
-        GaussFactor1 = feature_conversion_tools.composite(PARAM_CZ_C1_mG1,
+        GaussFactor1 = self.feature_conversion_tools.composite(PARAM_CZ_C1_mG1,
                                                           PARAM_CZ_C1_sG1,
                                                           PARAM_CZ_C1_fG1,
                                                           PARAM_CZ_C1_mG2,
@@ -56,7 +57,7 @@ class COLConversionTools:
 
         GaussFactor1 = GaussFactor1 - (GaussFactor1 / 10) + random_number * ((GaussFactor1 / 10) * 2)
 
-        GaussFactor2 = feature_conversion_tools.composite(PARAM_CZ_C2_mG1,
+        GaussFactor2 = self.feature_conversion_tools.composite(PARAM_CZ_C2_mG1,
                                                           PARAM_CZ_C2_sG1,
                                                           PARAM_CZ_C2_fG1,
                                                           PARAM_CZ_C2_mG2,
@@ -67,11 +68,11 @@ class COLConversionTools:
                                                           240.38,
                                                           ridge_depth,
                                                           feature_age)
-        PCM_min = feature_conversion_tools.PCM(0, ridge_depth)
-        PCM_max = feature_conversion_tools.PCM(4.567 * 1000, ridge_depth)
+        PCM_min = self.feature_conversion_tools.PCM(0, ridge_depth)
+        PCM_max = self.feature_conversion_tools.PCM(4.567 * 1000, ridge_depth)
         A = (1 - 0) / (PCM_min - PCM_max)
         B = 0 - A * PCM_max
-        PCM_norm = A * feature_conversion_tools.PCM(CurvatureFactor * abs(feature_age - 0), ridge_depth) + B
+        PCM_norm = A * self.feature_conversion_tools.PCM(CurvatureFactor * abs(feature_age - 0), ridge_depth) + B
 
         GaussMeanPeak = (GaussMean1 + shift) - front_x_young
         GaussMaxPeak = (1 / (GaussSigma1 * ((2 * math.pi) ** 0.5))) * math.exp(
@@ -95,10 +96,10 @@ class COLConversionTools:
         front_x_old = - profile_length / 2
         temporal_factor = 1 / 3
 
-        PCM_shift = feature_conversion_tools.PCM(feature_age * temporal_factor, ridge_depth)
+        PCM_shift = self.feature_conversion_tools.PCM(feature_age * temporal_factor, ridge_depth)
 
-        PCM_min = feature_conversion_tools.PCM(0, ridge_depth)
-        PCM_max = feature_conversion_tools.PCM(4.567 * 1000, ridge_depth)
+        PCM_min = self.feature_conversion_tools.PCM(0, ridge_depth)
+        PCM_max = self.feature_conversion_tools.PCM(4.567 * 1000, ridge_depth)
         A = (1 - 0) / (PCM_min - PCM_max)
         B = 0 - A * PCM_max
         PCM_shift_norm = A * PCM_shift + B

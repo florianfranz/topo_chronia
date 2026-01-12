@@ -6,23 +6,23 @@ from qgis.core import (Qgis, edit, QgsVectorLayer, QgsRasterLayer, QgsFeatureReq
 
 
 from ...base_tools import BaseTools
-base_tools = BaseTools()
 
 class RasterTools:
-    plate_polygons_path = base_tools.get_layer_path("Plate Polygons")
-    plate_polygons_layer = QgsVectorLayer(plate_polygons_path, "Plate Polygons", 'ogr')
-    output_folder_path = base_tools.get_layer_path("Output Folder")
     APPEARANCE = "APPEARANCE"
     PLATE = "PLATE"
-    def __init__(self):
-        pass
+
+    def __init__(self, base_tools: BaseTools):
+        self.base_tools = base_tools
+        self.output_folder_path = self.base_tools.get_layer_path("Output Folder")
+        self.plate_polygons_path = base_tools.get_layer_path("Plate Polygons")
+        self.plate_polygons_layer = QgsVectorLayer(self.plate_polygons_path, "Plate Polygons", 'ogr')
 
     def perform_final_raster_interpolation(self,age):
         """
         Performs the final raster interpolation with QGIS TIN method, with the water load
         corrected elevation values.
         """
-        output_folder_path = base_tools.get_layer_path("Output Folder")
+        output_folder_path = self.base_tools.get_layer_path("Output Folder")
         reproj_nodes_layer_path = os.path.join(output_folder_path, f"reproj_all_nodes_{int(age)}.geojson")
 
         reproj_nodes_layer = QgsVectorLayer(reproj_nodes_layer_path, "Nodes", "ogr")
@@ -32,7 +32,7 @@ class RasterTools:
         processing.run("qgis:tininterpolation", {
             'INTERPOLATION_DATA': f'{reproj_nodes_layer.source()}::~::0::~::6::~::0',
             'METHOD': 0,
-            'EXTENT': '-20037505.459500000,20037505.424600001,-6360516.244100000,6363880.960000000 [ESRI:54034]',
+            'EXTENT': '-20037508.34,20037508.34,-6363885.33,6363885.33 [ESRI:54034]',
             'PIXEL_SIZE': 10000, 'OUTPUT': final_raster_path})
 
         processing.run("gdal:fillnodata", {
@@ -140,7 +140,7 @@ class RasterTools:
         processing.run("qgis:tininterpolation", {
             'INTERPOLATION_DATA': f"{reproj_nodes_layer.source()}::~::0::~::3::~::0",
             'METHOD': 0,
-            'EXTENT': '-20037508.4268000014126301,20045909.1961000002920628,-6372972.0028000036254525,6368285.1716000000014901 [ESRI:54034]',
+            'EXTENT': '-20037508.34,20037508.34,-6363885.33,6363885.33 [ESRI:54034]',
             'PIXEL_SIZE': 10000,
             'OUTPUT': qgis_tin_unfilled_raster_path,
         })

@@ -26,18 +26,19 @@ After clicking on "Install Plugin", a green message box should appear on top not
 successful. If you see a message about pandas dependencies needing manual installation, just click on "ok".
 
 If the pandas library needs manual installation, the process is straightforward on Windows.
+Open the OSGeo4W Shell (Open Source Geospatial 4 Windows Shell) from the Start menu and run the following command:
 
 ::
 
-    Open the OSGeo4W Shell (Open Source Geospatial 4 Windows Shell) from the Start menu and run the following command:
     pip install pandas
 
 On other platforms, you might need to check what Python environment is used by QGIS.
 To install pandas in QGIS on macOS or Linux, follow these steps:
+Open QGIS and in the Python Console, run:
 
 ::
 
-    Open QGIS and in the Python Console, run:
+
     import sys
     print(sys.executable)
 
@@ -45,7 +46,9 @@ To install pandas in QGIS on macOS or Linux, follow these steps:
     **macOS** /Applications/QGIS.app/Contents/MacOS/bin/python3
     **Linux** /usr/bin/python3 or /usr/local/bin/python3 (depending on your installation)
 
-    Open your terminal and run the following command:
+Open your terminal and run the following command:
+
+::
 
        /your/path/ending/with/python3 -m pip install pandas
 

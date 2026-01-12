@@ -6,32 +6,32 @@ from qgis.core import (Qgis, edit, QgsVectorLayer, QgsFeatureRequest, QgsMessage
                        QgsSpatialIndex)
 
 from ...base_tools import BaseTools
-base_tools = BaseTools()
 
 from ..tools.subduction_tools import SUBConversionTools
-sub_tools = SUBConversionTools()
-
 from ..tools.sediments_tools import SEDConversionTools
-sed_tools = SEDConversionTools()
-
 
 from ..tools.feature_conversion_tools import FeatureConversionTools
-feature_conversion_tools = FeatureConversionTools()
+
 
 class LWSConversion:
-    plate_polygons_path = base_tools.get_layer_path("Plate Polygons")
-    plate_polygons_layer = QgsVectorLayer(plate_polygons_path, "Plate Polygons", 'ogr')
-    continent_polygons_path = base_tools.get_layer_path("Continent Polygons")
-    continent_polygons_layer = QgsVectorLayer(continent_polygons_path, "Continent Polygons", 'ogr')
-    geodesic_grid_path = base_tools.get_layer_path("Geodesic Grid")
-    geodesic_grid_layer = QgsVectorLayer(geodesic_grid_path, "Geodesic Grid", 'ogr')
-    output_folder_path = base_tools.get_layer_path("Output Folder")
     APPEARANCE = "APPEARANCE"
     POSITION = "POSITION"
-    def __init__(self):
-        pass
+
+    def __init__(self, base_tools: BaseTools):
+        self.base_tools = base_tools
+        self.output_folder_path = self.base_tools.get_layer_path("Output Folder")
+        self.plate_polygons_path = self.base_tools.get_layer_path("Plate Polygons")
+        self.plate_polygons_layer = QgsVectorLayer(self.plate_polygons_path, "Plate Polygons", "ogr")
+        self.continent_polygons_path = self.base_tools.get_layer_path("Continent Polygons")
+        self.continent_polygons_layer = QgsVectorLayer(self.continent_polygons_path, "Continent Polygons", "ogr")
+        self.geodesic_grid_path = self.base_tools.get_layer_path("Geodesic Grid")
+        self.geodesic_grid_layer = QgsVectorLayer(self.geodesic_grid_path, "Geodesic Grid", "ogr")
+        self.sub_tools = SUBConversionTools(base_tools)
+        self.feature_conversion_tools = FeatureConversionTools(base_tools)
+        self.sed_tools = SEDConversionTools(base_tools)
+
     def lower_subduction_to_nodes(self,age):
-        ridge_depth = feature_conversion_tools.get_ridge_depth(age)
+        ridge_depth = self.feature_conversion_tools.get_ridge_depth(age)
         x_min = 0
         step_length = 100
         x_max = 201
@@ -90,11 +90,11 @@ class LWSConversion:
                         point2 = multi_point[i - 1]
                         flag = 1
                     feature = QgsFeature()
-                    profile_geometry = feature_conversion_tools.create_profile(point1,point2,x_min,x_max,step_length,flag, "inverse")
+                    profile_geometry = self.feature_conversion_tools.create_profile(point1,point2,x_min,x_max,step_length,flag, "inverse")
                     if profile_geometry:
-                        cont_excluded_profile_geometry = feature_conversion_tools.cut_profile_spi(profile_geometry, self.continent_polygons_layer, "keep outside", "positive", age, False)
+                        cont_excluded_profile_geometry = self.feature_conversion_tools.cut_profile_spi(profile_geometry, self.continent_polygons_layer, "keep outside", "positive", age, False)
                         if cont_excluded_profile_geometry:
-                            final_profile_geometry = feature_conversion_tools.check_profile_intersection(cont_excluded_profile_geometry, spatial_index_profiles, geometry_dict_profiles)
+                            final_profile_geometry = self.feature_conversion_tools.check_profile_intersection(cont_excluded_profile_geometry, spatial_index_profiles, geometry_dict_profiles)
                             if final_profile_geometry:
                                 feature.setGeometry(final_profile_geometry)
                                 feature.setAttributes(lower_subduction_feature.attributes())
@@ -146,15 +146,15 @@ class LWSConversion:
                             break
                 if not intersects:
                     point = QgsPointXY(vertex[0], vertex[1])
-                    distance = feature_conversion_tools.prod_scal(feat_start_point, 1, point, 1)
+                    distance = self.feature_conversion_tools.prod_scal(feat_start_point, 1, point, 1)
                     coords = [vertex[0], vertex[1]]
                     if distance == 0:
-                        z = float(sub_tools.trench_depth(raster_depth, ridge_depth))
+                        z = float(self.sub_tools.trench_depth(raster_depth, ridge_depth))
                         z_with_sed = z
                         position = "Trench"
                         abys_sed = 0
                     else:
-                        abys_sed = sed_tools.abyssal_sediments(age, feature_abs_age)
+                        abys_sed = self.sed_tools.abyssal_sediments(age, feature_abs_age)
                         z = raster_depth
                         z_with_sed = raster_depth + abys_sed
                         position = "Profile"
@@ -185,7 +185,7 @@ class LWSConversion:
                 "features": all_points_features
             }, indent=2))
         #feature_conversion_tools.check_point_plate_intersection(age, "LWS")
-        feature_conversion_tools.add_id_nodes_setting(output_points_layer_path)
+        self.feature_conversion_tools.add_id_nodes_setting(output_points_layer_path)
         #feature_conversion_tools.add_layer_to_group(output_points_layer_path, f"{int(age)} Ma", "LWS")
 
 

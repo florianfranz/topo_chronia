@@ -1,18 +1,17 @@
 from ...base_tools import BaseTools
-base_tools = BaseTools()
-
 from ..tools.feature_conversion_tools import FeatureConversionTools
-feature_conversion_tools = FeatureConversionTools()
-
 from .sediments_tools import SEDConversionTools
-sed_tools = SEDConversionTools()
+
 
 class PMConversionTools:
-    output_folder_path = base_tools.get_layer_path("Output Folder")
     APPEARANCE = "APPEARANCE"
 
-    def __init__(self):
-        pass
+    def __init__(self, base_tools: BaseTools):
+        self.base_tools = base_tools
+        self.output_folder_path = self.base_tools.get_layer_path("Output Folder")
+        self.feature_conversion_tools = FeatureConversionTools(self.base_tools)
+        self.sed_tools = SEDConversionTools(self.base_tools)
+
 
     def passive_margin_profile_clean(self,distance, feature_age, raster_depth, ridge_depth, wedge_y, wedge_x, crest_y,
                                      crest_x, continent_y):
@@ -50,9 +49,9 @@ class PMConversionTools:
                     return z
         elif distance >= crest_x and distance <= continent_x:  # BETWEEN CREST AND CONTINENT END
             flex_age = 8
-            PCM_dist = feature_conversion_tools.PCM((flex_age * distance + feature_age), ridge_depth)
-            PCM_crest_x = feature_conversion_tools.PCM((flex_age * crest_x + feature_age), ridge_depth)
-            PCM_cont_x = feature_conversion_tools.PCM((flex_age * continent_x + feature_age), ridge_depth)
+            PCM_dist = self.feature_conversion_tools.PCM((flex_age * distance + feature_age), ridge_depth)
+            PCM_crest_x = self.feature_conversion_tools.PCM((flex_age * crest_x + feature_age), ridge_depth)
+            PCM_cont_x = self.feature_conversion_tools.PCM((flex_age * continent_x + feature_age), ridge_depth)
             A = (crest_y - continent_y) / (PCM_crest_x - PCM_cont_x)
             B = continent_y - A * PCM_cont_x
             z = A * PCM_dist + B
@@ -99,15 +98,15 @@ class PMConversionTools:
 
     def wedge_y(self,age, feature_age, feature_abs_age, ridge_depth, remove_abys_sed = False):
         age_ref = 225
-        ref_0 = sed_tools.floegelization(0)
-        ref_age_ref = sed_tools.floegelization(age_ref)
-        ref_abs_age = sed_tools.floegelization(feature_abs_age)
-        ref_age_recon = sed_tools.floegelization(age)
-        thick_ref = - feature_conversion_tools.PCM(age_ref, ridge_depth)
+        ref_0 = self.sed_tools.floegelization(0)
+        ref_age_ref = self.sed_tools.floegelization(age_ref)
+        ref_abs_age = self.sed_tools.floegelization(feature_abs_age)
+        ref_age_recon = self.sed_tools.floegelization(age)
+        thick_ref = - self.feature_conversion_tools.PCM(age_ref, ridge_depth)
         if remove_abys_sed is False:
             a = 2
         else:
-            abys_sed = sed_tools.abyssal_sediments(age, feature_abs_age)
+            abys_sed = self.sed_tools.abyssal_sediments(age, feature_abs_age)
             thick_ref = thick_ref - abys_sed
         axe_y_max = thick_ref * (6000 - ref_age_ref) / (ref_0 - ref_age_ref)
         axe_y_min = thick_ref * (0 - ref_age_ref) / (ref_0 - ref_age_ref)
@@ -121,10 +120,10 @@ class PMConversionTools:
 
     def wedge_x(self, age, feature_age, feature_abs_age, ridge_depth):
         age_ref = 225
-        ref_0 = sed_tools.floegelization(0)
-        ref_age_ref = sed_tools.floegelization(age_ref)
-        flog_abs_age = sed_tools.floegelization(feature_abs_age)
-        flog_age_recon = sed_tools.floegelization(age)
+        ref_0 = self.sed_tools.floegelization(0)
+        ref_age_ref = self.sed_tools.floegelization(age_ref)
+        flog_abs_age = self.sed_tools.floegelization(feature_abs_age)
+        flog_age_recon = self.sed_tools.floegelization(age)
         length_ref = 8 # PARAM_PM_WedgeXMax default value
 
         axe_x_max = length_ref * (6000 - ref_age_ref) / (ref_0 - ref_age_ref)
@@ -150,14 +149,14 @@ class PMConversionTools:
         PARAM_PM_C2_FCURV =  1
         PARAM_PM_C2_FPCM = 500
         for i in range(age_ref):
-            sum_ref = sum_ref + feature_conversion_tools.composite(PARAM_PM_C2_mG1,PARAM_PM_C2_sG1,
+            sum_ref = sum_ref + self.feature_conversion_tools.composite(PARAM_PM_C2_mG1,PARAM_PM_C2_sG1,
                                      PARAM_PM_C2_fG1, PARAM_PM_C2_mG2,
                                     PARAM_PM_C2_sG2, PARAM_PM_C2_fG2,
                                      PARAM_PM_C2_FCURV, PARAM_PM_C2_FPCM,
                                     240.38, ridge_depth, i)
 
         for j in range(int(feature_age)):
-            sum_age = sum_age + feature_conversion_tools.composite(PARAM_PM_C2_mG1,PARAM_PM_C2_sG1,
+            sum_age = sum_age + self.feature_conversion_tools.composite(PARAM_PM_C2_mG1,PARAM_PM_C2_sG1,
                                      PARAM_PM_C2_fG1, PARAM_PM_C2_mG2,
                                     PARAM_PM_C2_sG2, PARAM_PM_C2_fG2,
                                      PARAM_PM_C2_FCURV, PARAM_PM_C2_FPCM,
@@ -180,7 +179,7 @@ class PMConversionTools:
         return crest_x
 
     def crest_y_passive_margin(self, age, feature_age):
-        ridge_depth = feature_conversion_tools.get_ridge_depth(age)
+        ridge_depth = self.feature_conversion_tools.get_ridge_depth(age)
         PARAM_PM_C1_mG1 = 12
         PARAM_PM_C1_sG1 = 8
         PARAM_PM_C1_fG1 = 2000
@@ -190,7 +189,7 @@ class PMConversionTools:
         PARAM_PM_C1_FCURV = 1
         PARAM_PM_C1_FPCM = 500
         PARAM_GENERAL_CONTINENTZ = 240.38
-        crest_height = float(feature_conversion_tools.composite(PARAM_PM_C1_mG1,
+        crest_height = float(self.feature_conversion_tools.composite(PARAM_PM_C1_mG1,
                                       PARAM_PM_C1_sG1,
                                       PARAM_PM_C1_fG1,
                                       PARAM_PM_C1_mG2,

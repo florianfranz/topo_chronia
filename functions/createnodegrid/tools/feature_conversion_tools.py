@@ -13,18 +13,20 @@ from geopy.distance import geodesic, great_circle
 from geopy.point import Point
 
 from ...base_tools import BaseTools
-base_tools = BaseTools()
 
 from .velocity_data import velocity_dict
 
 
+
 class FeatureConversionTools:
-    plate_polygons_path = base_tools.get_layer_path("Plate Polygons")
-    plate_polygons_layer = QgsVectorLayer(plate_polygons_path, "Plate Polygons", 'ogr')
-    output_folder_path = base_tools.get_layer_path("Output Folder")
     APPEARANCE = "APPEARANCE"
-    def __init__(self):
-        pass
+
+    def __init__(self, base_tools: BaseTools):
+        self.base_tools = base_tools
+        self.output_folder_path = self.base_tools.get_layer_path("Output Folder")
+        self.plate_polygons_path = self.base_tools.get_layer_path("Plate Polygons")
+        self.plate_polygons_layer = QgsVectorLayer(self.plate_polygons_path, "Plate Polygons", "ogr")
+
 
 
     def get_ridge_depth(self,age):
@@ -690,8 +692,8 @@ class FeatureConversionTools:
             geometry = feature['geometry']['coordinates']
 
             # Systematically add 0.001 to both x (longitude) and y (latitude) coordinates
-            geometry[0] += 0.0001  # Shift longitude (x)
-            geometry[1] += 0.0001  # Shift latitude (y)
+            geometry[0] += 0.001  # Shift longitude (x)
+            geometry[1] += 0.001  # Shift latitude (y)
 
             # Update the feature's geometry with the new coordinates
             feature['geometry']['coordinates'] = geometry
@@ -919,10 +921,3 @@ class FeatureConversionTools:
         with edit(nodes_layer):
             nodes_layer.dataProvider().deleteFeatures(nodes_to_delete)
         nodes_layer.commitChanges()
-
-
-
-
-
-
-

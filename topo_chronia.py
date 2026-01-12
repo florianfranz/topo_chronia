@@ -41,7 +41,7 @@ from .dialogs.create_node_grid_dialog import CreateNodeGridDialog
 from .dialogs.interpolate_raster_dialog import InterpolateRasterDialog
 from .dialogs.match_fields_dialog import MatchFieldsDialog
 
-from .functions.check_configuration_functions import check_fields, check_file_geometry, check_values, create_age_list
+from .functions.check_configuration_functions import check_fields, check_file_geometry, check_values, create_age_list,get_relative_age
 
 
 class TopoChronia:
@@ -743,22 +743,81 @@ class TopoChronia:
         """
         if all(value == "success" for value in self.check_results.values()):
             # All checks are successful, proceed with creating the node grid
-            QgsMessageLog.logMessage("All checks successful, moving to Phase I: Create Node Grid.",
-                                     "Check Configuration", Qgis.Info)
+            QgsMessageLog.logMessage(
+                "All checks successful, moving to Phase I: Create Node Grid.",
+                "Check Configuration",
+                Qgis.Info
+            )
 
+            # Log the configuration for debugging
+            QgsMessageLog.logMessage(
+                f"Input configuration: {json.dumps(self.input_fc, indent=2)}",
+                "Check Configuration",
+                Qgis.Info
+            )
             system_name = platform.system()
             if system_name in ["Darwin", "Linux"]:
-                file_path = os.path.expanduser("~/Desktop/input_files.txt")
+                input_files_path = os.path.expanduser("~/Desktop/input_files.txt")
             else:
-                file_path = "input_files.txt"
+                input_files_path = "input_files.txt"
+            try:
+                with open(input_files_path, 'w') as f:
+                    json.dump(self.input_fc, f, indent=2)
+                QgsMessageLog.logMessage(
+                    f"Configuration saved to {input_files_path}",
+                    "Check Configuration",
+                    Qgis.Info
+                )
+            except Exception as e:
+                QgsMessageLog.logMessage(
+                    f"Error saving configuration: {str(e)}",
+                    "Check Configuration",
+                    Qgis.Warning
+                )
 
-            with open(file_path, "w") as json_file:
-                json.dump(self.input_fc, json_file)
+
+            # Close the check configuration dialog before opening the next one
+            self.check_configuration_dialog.close()
+
+            # Pass data directly to the next phase
             self.run_create_node_grid()
 
         else:
-            QgsMessageLog.logMessage("Some checks are not yet successful. Please check the input data above.",
-                                     "Check Configuration", Qgis.Info)
+            # Show which checks failed
+            failed_checks = [k for k, v in self.check_results.items() if v != "success"]
+            QgsMessageLog.logMessage(
+                f"Some checks are not yet successful: {', '.join(failed_checks)}. Please check the input data above.",
+                "Check Configuration",
+                Qgis.Warning
+            )
+    def create_all_age_list(self):
+        """
+        Creates the selectable ages that are common to the plate model,
+        plate polygons, and continents polygons. Displays ages with
+        their respective chronostratigraphic age names.
+        """
+        file_path = "pStrAge_values.txt"
+        try:
+
+            pm_set = set(self.PM_age_list or [])
+            pp_set = set(self.PP_age_list or [])
+            cp_set = set(self.CP_age_list or [])
+            all_age_list = sorted(list(pm_set.intersection(pp_set, cp_set)))
+
+            if not all_age_list:
+                return
+
+            # Save ages to file and populate UI
+            with open(file_path, "w") as file:
+                for i, age_value in enumerate(all_age_list, start=1):
+                    pStrAge = f"{age_value} Ma - [ {get_relative_age(age_value)} ]"
+                    file.write(pStrAge + "\n")
+
+            return all_age_list
+
+        except Exception as e:
+            QgsMessageLog.logMessage(f"Error creating age list: {str(e)}", "Create Node Grid", Qgis.Critical)
+            raise
 
     def run_match_fields(self):
         """
@@ -775,6 +834,7 @@ class TopoChronia:
         Connects all tools and buttons needed to perform the create node grid phase.
         """
         self.create_node_grid_dialog = CreateNodeGridDialog(self.PM_age_list, self.PP_age_list, self.CP_age_list, self.input_fc)
+        self.create_all_age_list()
         self.create_node_grid_dialog.show()
 
     def run_interpolate_raster(self):

@@ -5,26 +5,27 @@ from qgis.core import (Qgis, edit, QgsVectorLayer, QgsFeatureRequest, QgsRasterL
                        QgsVectorFileWriter, QgsGeometry, QgsPointXY, QgsFeature, QgsProject, QgsSpatialIndex)
 
 from ...base_tools import BaseTools
-base_tools = BaseTools()
 
 from ..tools.collision_tools import COLConversionTools
-col_tools = COLConversionTools()
 
 from ..tools.feature_conversion_tools import FeatureConversionTools
-feature_conversion_tools = FeatureConversionTools()
+
 
 class COLConversion:
-    continent_polygons_path = base_tools.get_layer_path("Continent Polygons")
-    continent_polygons_layer = QgsVectorLayer(continent_polygons_path, "Continent Polygons", 'ogr')
-    output_folder_path = base_tools.get_layer_path("Output Folder")
+    def __init__(self, base_tools: BaseTools):
+        self.base_tools = base_tools
+        self.output_folder_path = self.base_tools.get_layer_path("Output Folder")
+        self.continent_polygons_path = self.base_tools.get_layer_path("Continent Polygons")
+        self.continent_polygons_layer = QgsVectorLayer(self.continent_polygons_path, "Continent Polygons", "ogr")
 
-    def __init__(self):
-        pass
+        self.col_tools = COLConversionTools(self.base_tools)
+        self.feature_conversion_tools = FeatureConversionTools(self.base_tools)
+
     def collision_to_nodes(self,age):
         profile_length = 3  # PARAM_CZ_LENGTH
         front_x_young = -0.5  # PARAM_CZ_FRONTX
         step_length = 50
-        ridge_depth = feature_conversion_tools.get_ridge_depth(age)
+        ridge_depth = self.feature_conversion_tools.get_ridge_depth(age)
         z_up_plate = 240.38
         dens_COL_lines_layer_path = os.path.join(self.output_folder_path, f"dens_COL_lines_{int(age)}.geojson")
         dens_COL_lines = QgsVectorLayer(dens_COL_lines_layer_path,"Densified COL Lines",'ogr')
@@ -59,7 +60,7 @@ class COLConversion:
                 feature_abs_age = feature.attribute('AGE')
                 feature_age = feature_abs_age - age
                 COL_multipoints.changeAttributeValue(feature.id(),field_idx_fa,feature_age)
-                shift = float(col_tools.collision_profile_shifting(feature_age,front_x_young,profile_length, ridge_depth))
+                shift = float(self.col_tools.collision_profile_shifting(feature_age,front_x_young,profile_length, ridge_depth))
                 COL_multipoints.changeAttributeValue(feature.id(),field_idx_sh, shift)
         COL_multipoints.commitChanges()
         attributes = COL_multipoints.fields().toList()
@@ -91,15 +92,15 @@ class COLConversion:
                         point2 = multi_point[i - 1]
                         flag = 1
                     feature = QgsFeature()
-                    internal_profile_geometry = feature_conversion_tools.create_profile(point1,point2,0,x_max_int,step_length,flag, "inverse")
+                    internal_profile_geometry = self.feature_conversion_tools.create_profile(point1,point2,0,x_max_int,step_length,flag, "inverse")
                     if internal_profile_geometry:
-                        cont_included_profile_geometry = feature_conversion_tools.cut_profile_spi(internal_profile_geometry,
+                        cont_included_profile_geometry = self.feature_conversion_tools.cut_profile_spi(internal_profile_geometry,
                                                                                                   self.continent_polygons_layer,
                                                                                                   "keep inside",
                                                                                                   "positive", age,
                                                                                                   False)
                         if cont_included_profile_geometry:
-                            final_int_profile_geometry = feature_conversion_tools.check_profile_intersection(cont_included_profile_geometry,spatial_index_int_profiles, geometry_dict_int_profiles)
+                            final_int_profile_geometry = self.feature_conversion_tools.check_profile_intersection(cont_included_profile_geometry,spatial_index_int_profiles, geometry_dict_int_profiles)
                             if final_int_profile_geometry:
                                 feature.setGeometry(final_int_profile_geometry)
                                 feature.setAttributes(collision_feature.attributes())
@@ -113,15 +114,15 @@ class COLConversion:
                                     spatial_index_int_profiles.insertFeature(p_feature)
                                 int_profiles_provider.addFeature(feature)
                     feature = QgsFeature()
-                    external_profile_geometry = feature_conversion_tools.create_profile(point1,point2,0,x_max_ext,step_length,flag, "normal")
+                    external_profile_geometry = self.feature_conversion_tools.create_profile(point1,point2,0,x_max_ext,step_length,flag, "normal")
                     if external_profile_geometry:
-                        cont_included_profile_geometry = feature_conversion_tools.cut_profile_spi(external_profile_geometry,
+                        cont_included_profile_geometry = self.feature_conversion_tools.cut_profile_spi(external_profile_geometry,
                                                                                                   self.continent_polygons_layer,
                                                                                                   "keep inside",
                                                                                                   "positive", age,
                                                                                                   False)
                         if cont_included_profile_geometry:
-                            final_ext_profile_geometry = feature_conversion_tools.check_profile_intersection(cont_included_profile_geometry, spatial_index_ext_profiles, geometry_dict_ext_profiles)
+                            final_ext_profile_geometry = self.feature_conversion_tools.check_profile_intersection(cont_included_profile_geometry, spatial_index_ext_profiles, geometry_dict_ext_profiles)
                             if final_ext_profile_geometry:
                                 feature.setGeometry(final_ext_profile_geometry)
                                 feature.setAttributes(collision_feature.attributes())
@@ -149,8 +150,8 @@ class COLConversion:
             feature_age = profile_feature.attribute('FEAT_AGE')
             shift = profile_feature.attribute("SHIFT")
             for point in multi_point:
-                distance = - feature_conversion_tools.prod_scal(feat_start_point,1,point,1)
-                z = col_tools.collision_profile(feature_age,distance,front_x_young,shift,ridge_depth, z_up_plate)
+                distance = - self.feature_conversion_tools.prod_scal(feat_start_point,1,point,1)
+                z = self.col_tools.collision_profile(feature_age,distance,front_x_young,shift,ridge_depth, z_up_plate)
                 coords = [point[0], point[1]]
                 geojson_point_feature = {
                     "type": "Feature",
@@ -178,11 +179,11 @@ class COLConversion:
             feature_age = profile_feature.attribute('FEAT_AGE')
             shift = profile_feature.attribute("SHIFT")
             for point in multi_point:
-                distance = feature_conversion_tools.prod_scal(feat_start_point,1,point,1)
+                distance = self.feature_conversion_tools.prod_scal(feat_start_point,1,point,1)
                 if distance == 0: #Skip original point as we already have a point at feature line position created from internal profile
                     pass
                 else:
-                    z = col_tools.collision_profile(feature_age,distance,front_x_young,shift,ridge_depth, z_up_plate)
+                    z = self.col_tools.collision_profile(feature_age,distance,front_x_young,shift,ridge_depth, z_up_plate)
                     coords = [point[0], point[1]]
                     geojson_point_feature = {
                         "type": "Feature",
@@ -209,5 +210,5 @@ class COLConversion:
                 "features": all_points_features
             }, indent=2))
         #feature_conversion_tools.check_point_plate_intersection(age, "COL")
-        feature_conversion_tools.add_id_nodes_setting(output_points_layer_path)
+        self.feature_conversion_tools.add_id_nodes_setting(output_points_layer_path)
         #feature_conversion_tools.add_layer_to_group(output_points_layer_path, f"{int(age)} Ma", "COL")

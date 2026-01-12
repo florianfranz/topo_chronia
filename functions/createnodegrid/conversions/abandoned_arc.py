@@ -8,26 +8,26 @@ from qgis.core import (Qgis, edit, QgsVectorLayer, QgsFeatureRequest, QgsMessage
                        QgsSpatialIndex)
 
 from ...base_tools import BaseTools
-base_tools = BaseTools()
 
 from ..tools.sediments_tools import SEDConversionTools
-sed_tools = SEDConversionTools()
 
 from ..tools.feature_conversion_tools import FeatureConversionTools
-feature_conversion_tools = FeatureConversionTools()
 
 class ABAConversion:
-    output_folder_path = base_tools.get_layer_path("Output Folder")
+    def __init__(self, base_tools: BaseTools):
+        """Initialize AbandonedArcConversion with BaseTools instance."""
+        self.base_tools = base_tools
+        self.output_folder_path = self.base_tools.get_layer_path("Output Folder")
+        self.sed_tools = SEDConversionTools(base_tools)
+        self.feature_conversion_tools = FeatureConversionTools(self.base_tools)
 
-    def __init__(self):
-        pass
     def abandoned_arc_to_nodes(self,age):
         PARAM_AA_vF = 1000
         PARAM_AA_lambdaF = 0.57
         PARAM_AA_fG = 2500
         PARAM_AA_mG = 0
         PARAM_AA_sG = 0.177
-        ridge_depth = feature_conversion_tools.get_ridge_depth(age)
+        ridge_depth = self.feature_conversion_tools.get_ridge_depth(age)
         gauss_norm = (1 / (PARAM_AA_sG * ((2 * math.pi) ** 0.5))) * math.exp(- ((PARAM_AA_mG - PARAM_AA_mG) ** 2)/ (2 * (PARAM_AA_sG) ** 2))
         x_min = 0
         x_max_pos = 151
@@ -97,7 +97,7 @@ class ABAConversion:
                         point1 = multi_point[i]
                         point2 = multi_point[i - 1]
                         flag = 1
-                    lat_distance = feature_conversion_tools.prod_scal(point_init, 1, point1, 1)
+                    lat_distance = self.feature_conversion_tools.prod_scal(point_init, 1, point1, 1)
                     gauss_factor = PARAM_AA_vF * math.sin(
                         (lat_distance * (2 * math.pi)) / PARAM_AA_lambdaF) + PARAM_AA_fG
                     ABA_multipoints.changeAttributeValue(abandoned_arc_feature.id(), field_idx_ld, lat_distance)
@@ -105,9 +105,9 @@ class ABAConversion:
                     ABA_multipoints.changeAttributeValue(abandoned_arc_feature.id(), field_idx_rd, raster_depth)
                     updated_feature = next(ABA_multipoints.getFeatures(QgsFeatureRequest(abandoned_arc_feature.id())))
                     feature = QgsFeature()
-                    negative_profile_geometry = feature_conversion_tools.create_profile(point1,point2,x_min,x_max_neg,step_length, flag, "inverse")
+                    negative_profile_geometry = self.feature_conversion_tools.create_profile(point1,point2,x_min,x_max_neg,step_length, flag, "inverse")
                     if negative_profile_geometry:
-                        final_neg_profile_geometry = feature_conversion_tools.check_profile_intersection(negative_profile_geometry, spatial_index_neg_profiles, geometry_dict_neg_profiles)
+                        final_neg_profile_geometry = self.feature_conversion_tools.check_profile_intersection(negative_profile_geometry, spatial_index_neg_profiles, geometry_dict_neg_profiles)
                         if final_neg_profile_geometry:
                             feature.setGeometry(final_neg_profile_geometry)
                             feature.setAttributes(updated_feature.attributes())
@@ -121,9 +121,9 @@ class ABAConversion:
                                 spatial_index_neg_profiles.insertFeature(p_feature)
                             neg_profiles_provider.addFeature(feature)
                     feature = QgsFeature()
-                    positive_profile_geometry = feature_conversion_tools.create_profile(point1,point2,x_min,x_max_pos,step_length,flag, "normal")
+                    positive_profile_geometry = self.feature_conversion_tools.create_profile(point1,point2,x_min,x_max_pos,step_length,flag, "normal")
                     if positive_profile_geometry:
-                        final_pos_profile_geometry = feature_conversion_tools.check_profile_intersection(positive_profile_geometry, spatial_index_pos_profiles,geometry_dict_pos_profiles)
+                        final_pos_profile_geometry = self.feature_conversion_tools.check_profile_intersection(positive_profile_geometry, spatial_index_pos_profiles,geometry_dict_pos_profiles)
                         if final_pos_profile_geometry:
                             feature.setGeometry(final_pos_profile_geometry)
                             feature.setAttributes(updated_feature.attributes())
@@ -151,12 +151,12 @@ class ABAConversion:
             feature_abs_age = profile.attribute('AGE')
             feature_age = feature_abs_age - age
             feat_start_point = multi_point[0]
-            raster_depth = feature_conversion_tools.PCM(feature_age, ridge_depth)
+            raster_depth = self.feature_conversion_tools.PCM(feature_age, ridge_depth)
             for i in range(len(multi_point)):
-                distance = feature_conversion_tools.prod_scal(feat_start_point,1,multi_point[i],1)
+                distance = self.feature_conversion_tools.prod_scal(feat_start_point,1,multi_point[i],1)
                 coordinates = [multi_point[i][0], multi_point[i][1]]
                 raster_age = feature_age
-                abys_sed = float(sed_tools.abyssal_sediments(age,age + raster_age))
+                abys_sed = float(self.sed_tools.abyssal_sediments(age,age + raster_age))
                 z_profile = (gauss_factor * (1 / (PARAM_AA_sG * ((2 * math.pi) ** 0.5))) * math.exp(-((distance - PARAM_AA_mG) ** 2) / (2 * (PARAM_AA_sG ** 2))) / gauss_norm)
                 if abys_sed < z_profile:
                     z = raster_depth + z_profile
@@ -183,8 +183,8 @@ class ABAConversion:
                     all_points_features.append(geojson_point_feature)
                 else:
                     z = raster_depth + z_profile
-                    h_s = sed_tools.full_sediment_thickness(abys_sed - z_profile)
-                    rho_sed = sed_tools.rho_sed(h_s)
+                    h_s = self.sed_tools.full_sediment_thickness(abys_sed - z_profile)
+                    rho_sed = self.sed_tools.rho_sed(h_s)
                     geojson_point_feature = {
                         "type": "Feature",
                         "properties": {
@@ -217,13 +217,13 @@ class ABAConversion:
             feature_age = feature_abs_age - age
             feat_start_point = multi_point[-1]
             for i in range(len(multi_point)):
-                distance = feature_conversion_tools.prod_scal(feat_start_point,1,multi_point[i],1)
+                distance = self.feature_conversion_tools.prod_scal(feat_start_point,1,multi_point[i],1)
                 if distance == 0:
                     pass
                 else:
                     coordinates = [multi_point[i][0], multi_point[i][1]]
-                    raster_age = float(feature_conversion_tools.inversePCM(raster_depth,ridge_depth))
-                    abys_sed = float(sed_tools.abyssal_sediments(age,age + raster_age))
+                    raster_age = float(self.feature_conversion_tools.inversePCM(raster_depth,ridge_depth))
+                    abys_sed = float(self.sed_tools.abyssal_sediments(age,age + raster_age))
                     z_profile = (gauss_factor * (1 / (PARAM_AA_sG * ((2 * math.pi) ** 0.5))) * math.exp(-((distance - PARAM_AA_mG) ** 2) / (2 * (PARAM_AA_sG ** 2))) / gauss_norm)
                     if abys_sed < z_profile:
                         z = raster_depth + z_profile
@@ -250,8 +250,8 @@ class ABAConversion:
                         all_points_features.append(geojson_point_feature)
                     else:
                         z = raster_depth + z_profile
-                        h_s = sed_tools.full_sediment_thickness(abys_sed - z_profile)
-                        rho_sed = sed_tools.rho_sed(h_s)
+                        h_s = self.sed_tools.full_sediment_thickness(abys_sed - z_profile)
+                        rho_sed = self.sed_tools.rho_sed(h_s)
                         geojson_point_feature = {
                             "type": "Feature",
                             "properties": {
@@ -280,5 +280,5 @@ class ABAConversion:
                 "features": all_points_features
             }, indent=2))
         #feature_conversion_tools.check_point_plate_intersection(age, "ABA")
-        feature_conversion_tools.add_id_nodes_setting(output_points_layer_path)
+        self.feature_conversion_tools.add_id_nodes_setting(output_points_layer_path)
         #feature_conversion_tools.add_layer_to_group(output_points_layer_path, f"{int(age)} Ma", "ABA")

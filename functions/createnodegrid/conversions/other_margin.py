@@ -6,24 +6,24 @@ from qgis.core import (Qgis, edit, QgsVectorLayer, QgsFeatureRequest, QgsMessage
                        QgsVectorFileWriter, QgsField, QgsGeometry, QgsFeature, QgsPointXY, QgsProject)
 
 from ...base_tools import BaseTools
-base_tools = BaseTools()
 
 from ..tools.feature_conversion_tools import FeatureConversionTools
-feature_conversion_tools = FeatureConversionTools()
 
 from ..tools.sediments_tools import SEDConversionTools
-sed_tools = SEDConversionTools()
+
 
 
 class OTMConversion:
-    geodesic_grid_path = base_tools.get_layer_path("Geodesic Grid")
-    geodesic_grid_layer = QgsVectorLayer(geodesic_grid_path, "Geodesic Grid", 'ogr')
-    output_folder_path = base_tools.get_layer_path("Output Folder")
+    def __init__(self, base_tools: BaseTools):
+        self.base_tools = base_tools
+        self.output_folder_path = self.base_tools.get_layer_path("Output Folder")
+        self.geodesic_grid_path = self.base_tools.get_layer_path("Geodesic Grid")
+        self.geodesic_grid_layer = QgsVectorLayer(self.geodesic_grid_path, "Geodesic Grid", "ogr")
+        self.feature_conversion_tools = FeatureConversionTools(self.base_tools)
+        self.sed_tools = SEDConversionTools(self.base_tools)
 
-    def __init__(self):
-        pass
     def other_margin_to_nodes(self,age):
-        ridge_depth = feature_conversion_tools.get_ridge_depth(age)
+        ridge_depth = self.feature_conversion_tools.get_ridge_depth(age)
         x_min = -25
         x_max = 51
         step_length = 100
@@ -91,7 +91,7 @@ class OTMConversion:
                         point2 = multi_point[i-1]
                         flag = 1
                     feature = QgsFeature()
-                    profile_geometry = feature_conversion_tools.create_profile(point1,point2,x_min,x_max,step_length, flag, "normal")
+                    profile_geometry = self.feature_conversion_tools.create_profile(point1,point2,x_min,x_max,step_length, flag, "normal")
                     if profile_geometry:
                         feature.setGeometry(profile_geometry)
                         feature.setAttributes(other_margin_feature.attributes())
@@ -118,8 +118,8 @@ class OTMConversion:
                 if cont_feature.geometry().intersects(first_point_geom) and not cont_feature.geometry().intersects(
                         last_point_geom):
                     #Case 1: first point is in continents, last point is in oceans
-                    raster_age = feature_conversion_tools.inversePCM(raster_depth,ridge_depth)
-                    abys_sed = sed_tools.abyssal_sediments(age,age + raster_age)
+                    raster_age = self.feature_conversion_tools.inversePCM(raster_depth,ridge_depth)
+                    abys_sed = self.sed_tools.abyssal_sediments(age,age + raster_age)
                     z_with_sed = abys_sed + raster_depth
                     geojson_point_feature = {
                         "type": "Feature",
@@ -158,8 +158,8 @@ class OTMConversion:
                 elif not cont_feature.geometry().intersects(
                     first_point_geom) and cont_feature.geometry().intersects(last_point_geom):
                     #Case 2: last point is in continents, first point is in oceans
-                    raster_age = feature_conversion_tools.inversePCM(raster_depth,ridge_depth)
-                    abys_sed = sed_tools.abyssal_sediments(age,age + raster_age)
+                    raster_age = self.feature_conversion_tools.inversePCM(raster_depth,ridge_depth)
+                    abys_sed = self.sed_tools.abyssal_sediments(age,age + raster_age)
                     z_with_sed = abys_sed + raster_depth
                     geojson_point_feature = {
                         "type": "Feature",
@@ -202,5 +202,5 @@ class OTMConversion:
                 "features": all_points_features
             }, indent=2))
         #feature_conversion_tools.check_point_plate_intersection(age, "OTM")
-        feature_conversion_tools.add_id_nodes_setting(output_points_layer_path)
+        self.feature_conversion_tools.add_id_nodes_setting(output_points_layer_path)
         #feature_conversion_tools.add_layer_to_group(output_points_layer_path, f"{int(age)} Ma", "OTM")

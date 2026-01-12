@@ -5,20 +5,23 @@ from qgis.core import (Qgis, edit, QgsVectorLayer, QgsFeatureRequest, QgsRasterL
 from qgis.PyQt.QtCore import QVariant
 
 from ...base_tools import BaseTools
-base_tools = BaseTools()
 
 from ..tools.rift_tools import RIBConversionTools
-rib_tools = RIBConversionTools()
 
 from ..tools.feature_conversion_tools import FeatureConversionTools
-feature_conversion_tools = FeatureConversionTools()
+
 
 class RIBConversion:
-    continent_polygons_path = base_tools.get_layer_path("Continent Polygons")
-    continent_polygons_layer = QgsVectorLayer(continent_polygons_path, "Continent Polygons", 'ogr')
-    output_folder_path = base_tools.get_layer_path("Output Folder")
-    def __init__(self):
-        pass
+    def __init__(self, base_tools: BaseTools):
+        self.base_tools = base_tools
+        self.output_folder_path = self.base_tools.get_layer_path("Output Folder")
+        self.continent_polygons_path = self.base_tools.get_layer_path("Continent Polygons")
+        self.continent_polygons_layer = QgsVectorLayer(
+            self.continent_polygons_path, "Continent Polygons", "ogr"
+        )
+
+        self.rib_tools = RIBConversionTools(self.base_tools)
+        self.feature_conversion_tools = FeatureConversionTools(self.base_tools)
 
     def rift_to_nodes(self, age):
         step_length = 50
@@ -91,13 +94,13 @@ class RIBConversion:
                         point2 = multi_point[i - 1]
                         flag = 1
                     feature = QgsFeature()
-                    internal_profiles_geometry = feature_conversion_tools.create_profile(point1, point2, x_min, x_max_int,step_length, flag, "normal")
+                    internal_profiles_geometry = self.feature_conversion_tools.create_profile(point1, point2, x_min, x_max_int,step_length, flag, "normal")
                     if internal_profiles_geometry:
                         """bas_included_profile_geometry = feature_conversion_tools.cut_profile_spi(internal_profiles_geometry, basins_polygon_layer, "keep inside", "positive", age, True)
                         if bas_included_profile_geometry:"""
-                        cont_excluded_profile_geometry = feature_conversion_tools.cut_profile_spi(internal_profiles_geometry, self.continent_polygons_layer, "keep inside", "positive", age, False)
+                        cont_excluded_profile_geometry = self.feature_conversion_tools.cut_profile_spi(internal_profiles_geometry, self.continent_polygons_layer, "keep inside", "positive", age, False)
                         if cont_excluded_profile_geometry:
-                            final_int_profile_geometry = feature_conversion_tools.check_profile_intersection(
+                            final_int_profile_geometry = self.feature_conversion_tools.check_profile_intersection(
                                     cont_excluded_profile_geometry, spatial_index_int_profiles,
                                     geometry_dict_int_profiles)
                             if final_int_profile_geometry:
@@ -113,16 +116,16 @@ class RIBConversion:
                                     spatial_index_int_profiles.insertFeature(p_feature)
                                 internal_profiles_provider.addFeature(feature)
                     feature = QgsFeature()
-                    external_profile_geometry = feature_conversion_tools.create_profile(point1, point2, x_min, x_max_ext,step_length, flag, "inverse")
+                    external_profile_geometry = self.feature_conversion_tools.create_profile(point1, point2, x_min, x_max_ext,step_length, flag, "inverse")
                     if external_profile_geometry:
                         """bas_excluded_profile_geometry = feature_conversion_tools.cut_profile_spi(external_profile_geometry, basins_polygon_layer, "keep outside", "positive", age, True)
                         if bas_excluded_profile_geometry:"""
-                        cont_excluded_profile_geometry = feature_conversion_tools.cut_profile_spi(external_profile_geometry, self.continent_polygons_layer, "keep inside", "positive", age, False)
+                        cont_excluded_profile_geometry = self.feature_conversion_tools.cut_profile_spi(external_profile_geometry, self.continent_polygons_layer, "keep inside", "positive", age, False)
                         if cont_excluded_profile_geometry: #Need also to do a check with internal profiles: prioritize external (WIP)
-                            pre_final_ext_profile_geometry = feature_conversion_tools.check_profile_intersection(cont_excluded_profile_geometry, spatial_index_ext_profiles,
+                            pre_final_ext_profile_geometry = self.feature_conversion_tools.check_profile_intersection(cont_excluded_profile_geometry, spatial_index_ext_profiles,
                                 geometry_dict_ext_profiles)
                             if pre_final_ext_profile_geometry:
-                                final_ext_profile_geometry = feature_conversion_tools.check_profile_intersection(
+                                final_ext_profile_geometry = self.feature_conversion_tools.check_profile_intersection(
                                     pre_final_ext_profile_geometry, spatial_index_int_profiles,
                                     geometry_dict_int_profiles)
                                 if final_ext_profile_geometry:
@@ -156,7 +159,7 @@ class RIBConversion:
             multi_point = geom.asMultiPoint()
             feat_start_point = multi_point[0]
             for point in multi_point:
-                distance = feature_conversion_tools.prod_scal(feat_start_point, 1, point, 1)
+                distance = self.feature_conversion_tools.prod_scal(feat_start_point, 1, point, 1)
                 if distance == 0:
                     side = "Rift"
                 else:
@@ -165,7 +168,7 @@ class RIBConversion:
                 x_coord = point[0] + 0.001
                 y_coord = point[1] + 0.001
                 coords = [x_coord, y_coord]
-                z = float(rib_tools.rift_profile(distance, crest_z, through_y, feature_age, age))
+                z = float(self.rib_tools.rift_profile(distance, crest_z, through_y, feature_age, age))
                 geojson_RIB_feature = {
                     "type": "Feature",
                     "properties": {
@@ -193,7 +196,7 @@ class RIBConversion:
             multi_point = geom.asMultiPoint()
             feat_start_point = multi_point[0]
             for point in multi_point:
-                distance = feature_conversion_tools.prod_scal(feat_start_point, 1, point, 1)
+                distance = self.feature_conversion_tools.prod_scal(feat_start_point, 1, point, 1)
                 if distance == 0:
                     pass
                 if point[0] > 180 or point[0] < -180 or point[1] > 86.5 or point[1] < -86.5:
@@ -202,7 +205,7 @@ class RIBConversion:
                     x_coord = point[0] + 0.001
                     y_coord = point[1] + 0.001
                     coords = [x_coord, y_coord]
-                    z = float(rib_tools.rift_profile(distance, crest_z, through_y, feature_age, age))
+                    z = float(self.rib_tools.rift_profile(distance, crest_z, through_y, feature_age, age))
                     geojson_RIB_feature = {
                         "type": "Feature",
                         "properties": {
@@ -228,5 +231,5 @@ class RIBConversion:
                 "features": all_points_features
             }, indent=2))
         #feature_conversion_tools.check_point_plate_intersection(age, "RIB")
-        feature_conversion_tools.add_id_nodes_setting(output_points_layer_path)
+        self.feature_conversion_tools.add_id_nodes_setting(output_points_layer_path)
         #feature_conversion_tools.add_layer_to_group(output_points_layer_path, f"{int(age)} Ma", "RIB")

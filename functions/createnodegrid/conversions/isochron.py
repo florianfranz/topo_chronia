@@ -4,19 +4,15 @@ from qgis.core import (Qgis, edit, QgsVectorLayer, QgsFeatureRequest, QgsMessage
                        QgsPointXY, QgsGeometry, QgsField,QgsSpatialIndex)
 
 from ...base_tools import BaseTools
-base_tools = BaseTools()
-
-from ..tools.sediments_tools import SEDConversionTools
-sed_tools = SEDConversionTools()
-
 from ..tools.feature_conversion_tools import FeatureConversionTools
-feature_conversion_tools = FeatureConversionTools()
+
 
 class ISOConversion:
-    output_folder_path = base_tools.get_layer_path("Output Folder")
+    def __init__(self, base_tools: BaseTools):
+        self.base_tools = base_tools
+        self.output_folder_path = self.base_tools.get_layer_path("Output Folder")
+        self.feature_conversion_tools = FeatureConversionTools(base_tools)
 
-    def __init__(self):
-        pass
     def isochron_to_nodes(self, age):
         dens_ISO_lines_layer_path = os.path.join(self.output_folder_path, f"dens_ISO_lines_{int(age)}.geojson")
         dens_ISO_layer = QgsVectorLayer(dens_ISO_lines_layer_path, "Densified Isochrons Lines", 'ogr')
@@ -65,6 +61,6 @@ class ISOConversion:
         with open(output_points_layer_path, 'w') as output_file:
             output_file.write(json.dumps({"type": "FeatureCollection","features": all_points_features}, indent=2))
         output_nodes_layer_path = os.path.join(self.output_folder_path, f"all_nodes_{int(age)}.geojson")
-        feature_conversion_tools.add_nodes(age,output_points_layer_path,output_nodes_layer_path,first_build=False)
-        feature_conversion_tools.add_id_nodes_setting(output_points_layer_path)
+        self.feature_conversion_tools.add_nodes(age,output_points_layer_path,output_nodes_layer_path,first_build=False)
+        self.feature_conversion_tools.add_id_nodes_setting(output_points_layer_path)
         #feature_conversion_tools.add_layer_to_group(output_points_layer_path, f"{int(age)} Ma", "ISO")

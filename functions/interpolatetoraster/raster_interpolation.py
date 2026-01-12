@@ -8,19 +8,8 @@ from qgis.core import (edit, Qgis,QgsPoint, QgsGeometry, QgsVectorLayer, QgsFeat
                        QgsProcessingParameterField, QgsProcessingParameterNumber, QgsProcessingParameterRasterDestination,
                        QgsRasterLayer, QgsCoordinateReferenceSystem, QgsProject, QgsCoordinateTransform)
 
-from ..base_tools import BaseTools
-base_tools = BaseTools()
-
 
 class RasterInterpolation:
     def __init__(self):
         # Any initialization code goes here
         pass
-
-
-
-
-
-
-
-
