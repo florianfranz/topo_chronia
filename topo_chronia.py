@@ -761,7 +761,7 @@ class TopoChronia:
             else:
                 input_files_path = "input_files.txt"
             try:
-                with open(input_files_path, 'w') as f:
+                with open(input_files_path, "w") as f:
                     json.dump(self.input_fc, f, indent=2)
                 QgsMessageLog.logMessage(
                     f"Configuration saved to {input_files_path}",
@@ -796,7 +796,6 @@ class TopoChronia:
         plate polygons, and continents polygons. Displays ages with
         their respective chronostratigraphic age names.
         """
-        file_path = "pStrAge_values.txt"
         try:
 
             pm_set = set(self.PM_age_list or [])
@@ -807,11 +806,27 @@ class TopoChronia:
             if not all_age_list:
                 return
 
-            # Save ages to file and populate UI
-            with open(file_path, "w") as file:
-                for i, age_value in enumerate(all_age_list, start=1):
-                    pStrAge = f"{age_value} Ma - [ {get_relative_age(age_value)} ]"
-                    file.write(pStrAge + "\n")
+            system_name = platform.system()
+            if system_name in ["Darwin", "Linux"]:
+                ages_list_path = os.path.expanduser("~/Desktop/pStrAge_values.txt")
+            else:
+                ages_list_path = "pStrAge_values.txt"
+            try:
+                with open(ages_list_path, "w") as file:
+                    for i, age_value in enumerate(all_age_list, start=1):
+                        pStrAge = f"{age_value} Ma - [ {get_relative_age(age_value)} ]"
+                        file.write(pStrAge + "\n")
+                QgsMessageLog.logMessage(
+                    f"Configuration saved to {ages_list_path}",
+                    "Check Configuration",
+                    Qgis.Info
+                )
+            except Exception as e:
+                QgsMessageLog.logMessage(
+                    f"Error saving configuration: {str(e)}",
+                    "Check Configuration",
+                    Qgis.Warning
+                )
 
             return all_age_list
 

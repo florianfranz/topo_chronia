@@ -132,7 +132,12 @@ class CreateNodeGridDialog(QtWidgets.QDialog, FORM_CLASS):
         their respective chronostratigraphic age names.
         """
         QgsMessageLog.logMessage("Button click works", "Create Node Grid", Qgis.Info)
-        file_path = "pStrAge_values.txt"
+        system_name = platform.system()
+        if system_name in ["Darwin", "Linux"]:
+            file_path = os.path.expanduser("~/Desktop/pStrAge_values.txt")
+        else:
+            file_path = "pStrAge_values.txt"
+
         try:
             self.age_listWidget.clear()
 
