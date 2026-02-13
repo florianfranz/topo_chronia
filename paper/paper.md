@@ -48,16 +48,16 @@ Most of the plate tectonic models and reconstructions use the standalone GPlates
 which allows users to move plates in time steps and export geospatial data layers. These layers can later be used in 
 GIS software, such as the QGIS plugin `TerraAntiqua` [@aminov2023], to reconstruct 
 palaeotopography. Other models such as PANALESIS [@verard2019], are created and have processing functionalities that use commercial 
-GIS software (ArcGIS). A preliminary version of the code to generate topography of the Earth based on PANALESIS past was developed 
-as an ArcGIS extension, written in Visual Basic .NET but never published. It is now fully updated as a QGIS plugin in 
+GIS software (ArcGIS). A preliminary version of the code to generate topography of the Earth based on PANALESIS was developed 
+as an ArcGIS extension, written in Visual Basic .NET, but never published. It is now fully updated as a QGIS plugin in 
 Python.
 
 Constraining the palaeotopography is critical in fields such as climate and mantle dynamics modelling, as the elevation 
 of land and bathymetry of oceans are used to set the initial conditions of models [@bello2015;
 @ragon2023]. 
 Quantifying the Earth’s topography and its evolution also allows to estimate the volume of rocks being eroded, for instance 
-through sediment discharge [@lyster2020], as weathering or silicate rocks is a key controlling 
-factor of CO2 concentration in the atmosphere over geological time scales [@molnar1990;
+through sediment discharge [@lyster2020], as weathering of silicate rocks is a key controlling 
+factor of CO<sub>2</sub> concentration in the atmosphere over geological time scales [@molnar1990;
 @macdonaldArccontinentCollisionsTropics2019].
 
 The traditional method to create palaeotopographic maps [@scotese2021] is to use present-day
@@ -69,7 +69,7 @@ cannot be “copy-pasted” as such, and that one time step might not be coheren
 
 We provide here an open-source plugin to reconstruct palaeotopography and palaeogeography "from scratch" using the
 PANALESIS model, which is based on present-day geological evidence and uses a dual-control approach, meaning that one
-reconstruction is based on the state of the Earth in the previous time-step, and influences the next step. 
+reconstruction is based on the state of the Earth in the previous time-step and influences the next step. 
 Synthetic values for elevations are generated in nodes (points) related to geological settings and based on their 
 present-day counterparts [@verard2017]. The output maps of `TopoChronia` can be used for 
 modelling purposes and to reconstruct sea-level curves, over the Phanerozoic and beyond [@verard2015;@franziskakis2025a].
@@ -87,7 +87,7 @@ modelling purposes and to reconstruct sea-level curves, over the Phanerozoic and
 2. Create Node Grid  
   - Select input lines from plate model file
   - Convert mid-oceanic ridge and isochron features and interpolate a preliminary raster for oceans
-  - Convert all other features (abandoned arcs, continents, cratons, lower subduction, upper subduction, passive margin wedges,  
+  - Convert all other features (abandoned arcs, continents, cratons, lower subduction, upper subduction, passive margin wedges, 
       continent sides, hot-spots, other margins, rifts, and collision zones)
   - Merge all nodes and clean to avoid clashing between features  
 
