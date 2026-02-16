@@ -247,6 +247,12 @@ enviroSPACE group, Institute for Environmental Sciences, University of Geneva
 This plugin is licensed under the GNU General Public License, version 2 or later (GPLv2+). 
 You can view the full license text in the [LICENSE.txt](./LICENSE.txt).
 
+## Citation
+
+TopoChronia my be reference using the following paper:
+
+Franziskakis, F., Vérard, C., Castelltort, S., & Giuliani, G. (2026). TopoChronia: A QGIS plugin for the creation of fully quantified palaeogeographic maps. Journal of Open Source Software, 11(118), 8812. https://doi.org/10.21105/joss.08812
+
 ## Funding
 
 We acknowledge financial support from the Swiss National Science Foundation (SNSF) under [Sinergia grant #213539](https://data.snf.ch/grants/grant/213539): _Long-term 
