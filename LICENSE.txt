@@ -23,7 +23,7 @@ This plugin is distributed as part of the QGIS ecosystem and must adhere to the 
 
 If you use this plugin in your research or projects, please cite the following:
 
-[Paper Citation Here]
+Franziskakis, F., Vérard, C., Castelltort, S., & Giuliani, G. (2026). TopoChronia: A QGIS plugin for the creation of fully quantified palaeogeographic maps. Journal of Open Source Software, 11(118), 8812. https://doi.org/10.21105/joss.08812
 
 If you have any questions or require additional permissions, please contact florian.franziskakis@unige.ch.
 
