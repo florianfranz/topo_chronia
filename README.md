@@ -1,3 +1,13 @@
+[![DOI](https://joss.theoj.org/papers/10.21105/joss.08812/status.svg)](https://doi.org/10.21105/joss.08812)
+[![License: GPL v2+](https://img.shields.io/badge/License-GPL_v2%2B-blue.svg)](https://www.gnu.org/licenses/old-licenses/gpl-2.0.en.html)
+[![Documentation Status](https://readthedocs.org/projects/topo-chronia/badge/?version=latest)](https://topo-chronia.readthedocs.io/en/latest/)
+[![Latest Release](https://img.shields.io/github/v/release/florianfranz/topo_chronia.svg)](https://github.com/florianfranz/topo_chronia/releases)
+[![Zenodo DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.18623621.svg)](https://doi.org/10.5281/zenodo.18623621)
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](http://makeapullrequest.com)
+![Maintained](https://img.shields.io/badge/Maintained%3F-yes-green.svg)
+
+
+
 <table>
   <tr>
     <td style="width: 40%; text-align: center;">
